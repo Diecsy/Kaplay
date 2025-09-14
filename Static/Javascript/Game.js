@@ -27,4 +27,3 @@ Socket.on("ConnectionError", (Error) => {
 });
 
 DebugService.ErudaConsole();
-ClientService.Testing();
