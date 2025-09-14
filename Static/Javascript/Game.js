@@ -20,9 +20,11 @@ const Socket = io("https://kaplay.onrender.com", {
   },
 });
 
-DebugService.ErudaConsole?.();
-LoadService.LoadKaplay?.();
-SceneService.LoadScenes?.();
+DebugService.ErudaConsole.();
+LoadService.LoadKaplay();
+SceneService.LoadScenes();
+
+go("Testing");
 
 Socket.on("connect", () => {
   console.log("Socket connected, id:", Socket.id);
@@ -35,8 +37,7 @@ Socket.on("connect_error", (err) => {
 Socket.on("ConnectionError", (errorMessage) => {
   console.warn("ConnectionError:", errorMessage);
   if (errorMessage === "SingleTab") {
-    alert("You already have this app open in another tab.");
-    document.body.innerHTML = "<h2>This app is already open in another tab.</h2>";
+    window.close();
   } else {
     document.body.innerHTML = `<h2>Connection error: ${String(errorMessage)}</h2>`;
   }
