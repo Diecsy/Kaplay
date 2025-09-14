@@ -11,11 +11,11 @@ Application.use(Express.static(StaticPath));
 const ActiveClients = new Set();
 const ServerState = {};
 
-
 IO.on("connection", (Socket) => {
     const ClientId = Socket.handshake.auth.clientId;
 
     if (!ClientId) {
+        console.log(`Client ${ClientId} disconnected`);
         Socket.disconnect(true);
         return;
     }
