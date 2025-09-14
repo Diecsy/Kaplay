@@ -1,52 +1,77 @@
-const Express = require("express");
-const Path = require("path");
-const HTTP = require("http").createServer;
-const SocketIO = require("socket.io");
+// index.js
+const express = require("express");
+const path = require("path");
+const http = require("http");
+const { Server } = require("socket.io");
 
-const Application = Express();
-const Server = HTTP(Application);
-const IO = SocketIO(Server);
+const app = express();
+const server = http.createServer(app);
 
-const StaticPath = Path.join(__dirname, "Static");
-Application.use(Express.static(StaticPath));
+const io = new Server(server, {
+  cors: {
+    origin: ["https://kaplay.onrender.com", "http://localhost:3000"], // adjust as needed
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
+
+// serve static files from ./Static
+const staticPath = path.join(__dirname, "Static");
+app.use(express.static(staticPath));
 
 const ServerState = {
   ActiveClients: new Set(),
   ActiveMatches: new Set(),
-  Port: process.env.PORT || 3000, // safer default than 80
+  Port: process.env.PORT || 3000,
 };
 
-IO.on("connection", (Socket) => {
-  const Client = Socket.handshake.auth.Client;
-  const ClientId = Client.ClientId;
+io.on("connection", (socket) => {
+  console.log("Socket connected:", socket.id);
 
-  if (!ClientId) {
-    console.log(`Client missing ClientId, disconnecting`);
-    Socket.disconnect(true);
+  // safe access to handshake auth
+  const clientInfo = socket.handshake?.auth?.Client;
+  const clientId = clientInfo?.ClientId;
+
+  if (!clientId) {
+    console.log(`Connection rejected (missing ClientId) - socket: ${socket.id}`);
+    socket.emit("ConnectionError", "MissingClientId");
+    socket.disconnect(true);
     return;
   }
 
-  if (ServerState.ActiveClients.has(ClientId)) {
-    console.log(`Duplicate ClientId ${ClientId}, rejecting connection`);
-    Socket.emit("ConnectionError", "SingleTab");
-    Socket.disconnect(true);
+  // deny duplicate clientId (single tab)
+  if (ServerState.ActiveClients.has(clientId)) {
+    console.log(`Duplicate ClientId ${clientId} attempted connection; rejecting.`);
+    socket.emit("ConnectionError", "SingleTab");
+    socket.disconnect(true);
     return;
   }
 
-  console.log(`Client ${ClientId} connected`);
-  ServerState.ActiveClients.add(ClientId);
+  // accept the client
+  ServerState.ActiveClients.add(clientId);
+  console.log(`Client ${clientId} connected (socket ${socket.id})`);
 
-  Socket.on("ServerPacket", (Packet) => {
-    if (!Packet?.Name) return;
-    // Handle packet here
+  // Example packet handler
+  socket.on("ServerPacket", (packet) => {
+    // basic validation
+    if (!packet || typeof packet.Name !== "string") {
+      // ignore malformed packets
+      return;
+    }
+    // handle other packet names here
+    // e.g. if (packet.Name === "Player") { ... }
   });
 
-  Socket.on("disconnect", () => {
-    ServerState.ActiveClients.delete(ClientId);
-    console.log(`Client ${ClientId} disconnected`);
+  socket.on("disconnect", (reason) => {
+    ServerState.ActiveClients.delete(clientId);
+    console.log(`Client ${clientId} disconnected (socket ${socket.id}). Reason: ${reason}`);
+  });
+
+  socket.on("error", (err) => {
+    console.error("Socket error:", err);
   });
 });
 
-Server.listen(ServerState.Port, () => {
-  console.log(`PORT OPENED ON: *${ServerState.Port}`);
+server.listen(ServerState.Port, () => {
+  console.log(`Server listening on port ${ServerState.Port}`);
 });

@@ -1,52 +1,52 @@
 const Character = {};
 Character.Skills = {
-  Bind: {
-    // The recorded keybind's executive order
-    Name: "Skill Name", // This would be the skill's actual name
-    Desc: "Up air", // Character skill description
-    Func: function () {
-      // Skill Function for actually executing it
-      console.log("hi");
+    Bind: {
+        // The recorded keybind's executive order
+        Name: "Skill Name", // This would be the skill's actual name
+        Desc: "Up air", // Character skill description
+        Func: function () {
+            // Skill Function for actually executing it
+            console.log("hi");
+        },
     },
-  },
 
-  BasicAttack: {
-    // A character's basic attack
-    Name: "Basic Punch", // Attack name, like kick or punch, etc
-    Description: "Basic Punch", // Description, etc
-    Function: function () {
-      // Attack Function for execution
-      console.log("Basic Punch");
+    BasicAttack: {
+        // A character's basic attack
+        Name: "Basic Punch", // Attack name, like kick or punch, etc
+        Description: "Basic Punch", // Description, etc
+        Function: function () {
+            // Attack Function for execution
+            console.log("Basic Punch");
+        },
     },
-  },
 
-  HeavyAttack: {
-    // A character's heavy attack
-    Name: "Heavy Punch", // Attack name, like heavy kick or heavy punch, etc
-    Description: "Heavy Punch", // Description, etc
-    Function: function () {
-      // Attack Function for execution
-      console.log("Heavy Punch");
+    HeavyAttack: {
+        // A character's heavy attack
+        Name: "Heavy Punch", // Attack name, like heavy kick or heavy punch, etc
+        Description: "Heavy Punch", // Description, etc
+        Function: function () {
+        // Attack Function for execution
+        console.log("Heavy Punch");
+        },
     },
-  },
 
-  RightDash: {
-    // A character's basic right dash
-    Name: "Right Dash",
-    Description: "Right Dash",
-    Function: function () {
-      console.log("Right dash");
+    RightDash: {
+        // A character's basic right dash
+        Name: "Right Dash",
+        Description: "Right Dash",
+        Function: function () {
+        console.log("Right dash");
+        },
     },
-  },
 
-  LeftDash: {
-    // A character's basic left dash
-    Name: "Left Dash",
-    Description: "Left Dash",
-    Function: function () {
-      console.log("Left dash");
+    LeftDash: {
+        // A character's basic left dash
+        Name: "Left Dash",
+        Description: "Left Dash",
+        Function: function () {
+        console.log("Left dash");
+        },
     },
-  },
 };
 
 export { Character };

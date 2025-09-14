@@ -5,31 +5,49 @@ import { LoadService } from './Services/Load.js';
 
 let ClientId = localStorage.getItem("ClientId");
 if (!ClientId) {
-  ClientId = crypto.randomUUID();
+  ClientId = (crypto && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   localStorage.setItem("ClientId", ClientId);
 }
+
 
 const Socket = io("https://kaplay.onrender.com", {
   reconnectionDelayMax: 10000,
   auth: {
     Client: {
       Name: "CustomReplicatedClient",
-      ClientId: localStorage.getItem("ClientId")
+      ClientId: ClientId
     }
   },
 });
 
-DebugService.ErudaConsole();
-LoadService.LoadKaplay();
-SceneService.LoadScenes();
+DebugService.ErudaConsole?.();
+LoadService.LoadKaplay?.();
+SceneService.LoadScenes?.();
 
-Socket.on("ConnectionError", (ErrorMessage) => {
-  if (ErrorMessage === "SingleTab") {
+Socket.on("connect", () => {
+  console.log("Socket connected, id:", Socket.id);
+});
+
+Socket.on("connect_error", (err) => {
+  console.error("Socket connect_error:", err);
+});
+
+Socket.on("ConnectionError", (errorMessage) => {
+  console.warn("ConnectionError:", errorMessage);
+  if (errorMessage === "SingleTab") {
     alert("You already have this app open in another tab.");
-    document.body.innerHTML = "<h2>Already open in another tab</h2>";
+    document.body.innerHTML = "<h2>This app is already open in another tab.</h2>";
+  } else {
+    document.body.innerHTML = `<h2>Connection error: ${String(errorMessage)}</h2>`;
   }
 });
 
+Socket.on("disconnect", (reason) => {
+  console.log("Socket disconnected:", reason);
+});
+
 setInterval(() => {
-  Socket.emit("ServerPacket", { Name: "Player" });
-}, 1000 / 60);
+  if (Socket && Socket.connected) {
+    Socket.emit("ServerPacket", { Name: "Player" });
+  }
+}, Math.round(1000 / 60));
