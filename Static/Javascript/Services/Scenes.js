@@ -5,7 +5,7 @@ const PLAYER_SPEED = 640;
 SceneService.LoadScenes = function () {
     setGravity(4000);
 
-    scene("Testing", () = > {
+    scene("Testing", () => {
         const bean = add([
             sprite("bean"),
             area(),
