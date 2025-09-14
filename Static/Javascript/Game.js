@@ -11,7 +11,10 @@ if (!ClientId) {
 const Socket = io("https://kaplay.onrender.com/", {
   reconnectionDelayMax: 10000,
   auth: {
-    ClientId: localStorage.getItem("ClientId")
+    Client: {
+      Name: "CustomReplicatedClient",
+      ClientId: localStorage.getItem("ClientId")
+    }
   },
 });
 
@@ -21,6 +24,10 @@ Socket.on("ConnectionError", (ErrorMessage) => {
     window.close();
   }
 });
+
+setInterval(() => {
+    Socket.emit('ServerPacket', { Name = "Player" });
+}, 1000 / 60);
 
 DebugService.ErudaConsole();
 LoadService.LoadKaplay();

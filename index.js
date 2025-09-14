@@ -11,11 +11,13 @@ Application.use(Express.static(StaticPath));
 
 const ServerState = {
   ActiveClients: new Set(),
+  ActiveMatches = {},
   Port: process.env.PORT || 3000,
 };
 
 IO.on("connection", (Socket) => {
-  const ClientId = Socket.handshake.auth.ClientId;
+  const Client = Socket.handshake.auth.Client;
+  let ClientId = Client.ClientId;
 
   if (!ClientId) {
     console.log(`Client ${ClientId} disconnected`);
@@ -32,6 +34,12 @@ IO.on("connection", (Socket) => {
   }
 
   ServerState.ActiveClients.add(ClientId);
+
+  Socket.on("ServerPacket", (Packet) => {
+    if (!Packet || !Packet["Name"]) {
+      return;
+    };
+  };
 
   Socket.on("disconnect", () => {
     ServerState.ActiveClients.delete(ClientId);
