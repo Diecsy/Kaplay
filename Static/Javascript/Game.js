@@ -22,9 +22,10 @@ kaplay({
     maxFPS: 60,
 });
 
-Socket.on("ConnectionError", (Error) => {
-  if (Error.message === "SingleTab") {
+Socket.on("ConnectionError", (ErrorMessage) => {
+  if (ErrorMessage == "SingleTab") {
     alert("You already have this app open in another tab.");
+    window.close();
   }
 });
 

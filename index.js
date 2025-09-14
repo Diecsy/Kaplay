@@ -21,10 +21,12 @@ IO.on("connection", (Socket) => {
     console.log(`Client ${ClientId} disconnected`);
     Socket.disconnect(true);
     return;
+  } else {
+    console.log(`Client ${ClientId} Loaded`);
   }
 
   if (ServerState.ActiveClients.has(ClientId)) {
-    Socket.emit("ConnectionError", new Error("SingleTab"));
+    Socket.emit("ConnectionError", "SingleTab");
     Socket.disconnect(true);
     return;
   }
