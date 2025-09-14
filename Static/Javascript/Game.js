@@ -1,6 +1,5 @@
 import { ClientService } from './Services/Client.js';
 import { DebugService } from './Services/Debug.js';
-import { io } from "socket.io-client";
 
 let ClientId = localStorage.getItem("ClientId");
 if (!ClientId) {
