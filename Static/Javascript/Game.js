@@ -1,4 +1,5 @@
 import { ClientService } from './Services/Client.js';
+import { SceneService } from './Services/Scenes.js';
 import { DebugService } from './Services/Debug.js';
 import { LoadService } from './Services/Load.js';
 
@@ -18,6 +19,10 @@ const Socket = io("https://kaplay.onrender.com/", {
   },
 });
 
+DebugService.ErudaConsole();
+LoadService.LoadKaplay();
+SceneService.LoadScenes();
+
 Socket.on("ConnectionError", (ErrorMessage) => {
   if (ErrorMessage == "SingleTab") {
     alert("You already have this app open in another tab.");
@@ -28,6 +33,3 @@ Socket.on("ConnectionError", (ErrorMessage) => {
 setInterval(() => {
     Socket.emit('ServerPacket', { Name = "Player" });
 }, 1000 / 60);
-
-DebugService.ErudaConsole();
-LoadService.LoadKaplay();
