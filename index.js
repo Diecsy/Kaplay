@@ -1,10 +1,10 @@
 const Express = require("express");
 const Path = require("path");
-const HTTP = require("http").createServer;
+const HTTPs = require("http")
 const SocketIO = require("socket.io");
 
 const Application = Express();
-const Server = HTTP(Application);
+const Server = HTTPs.createServer(Application);
 const IO = SocketIO(Server);
 
 const StaticPath = Path.join(__dirname, "Static");
