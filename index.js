@@ -13,7 +13,7 @@ const ActiveClients = new Set();
 const ServerState = {};
 
 IO.on("connection", (Socket) => {
-  const ClientId = Socket.handshake.auth.clientId;
+  const ClientId = Socket.handshake.auth.ClientId;
 
   if (!ClientId) {
     console.log(`Client ${ClientId} disconnected`);
