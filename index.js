@@ -39,7 +39,7 @@ IO.on("connection", (Socket) => {
     if (!Packet || !Packet["Name"]) {
       return;
     };
-  };
+  });
 
   Socket.on("disconnect", () => {
     ServerState.ActiveClients.delete(ClientId);
