@@ -12,7 +12,7 @@ Application.use(Express.static(StaticPath));
 const ServerState = {
   ActiveClients: new Set(),
   ActiveMatches: new Set(),
-  Port: process.env.PORT || 3000,
+  Port: process.env.PORT || 80,
 };
 
 IO.on("connection", (Socket) => {
@@ -48,5 +48,5 @@ IO.on("connection", (Socket) => {
 });
 
 HTTPs.listen(ServerState.Port, () => {
-  console.log("PORT OPENED ON : " + ServerState.Port);
+  console.log("PORT OPENED ON : *" + ServerState.Port);
 });
