@@ -9,8 +9,10 @@ var IO = require("socket.io")(HTTPs);
 var StaticPath = Path.join(__dirname, "Static");
 Application.use(Express.static(StaticPath));
 
-const ActiveClients = new Set();
-const ServerState = {};
+const ServerState = {
+  "ActiveClients": new Set(),
+  "Port": process.env.PORT || 3000,
+};
 
 IO.on("connection", (Socket) => {
   const ClientId = Socket.handshake.auth.ClientId;
@@ -20,14 +22,22 @@ IO.on("connection", (Socket) => {
     Socket.disconnect(true);
     return;
   }
+
+  if (ServerState.ActiveClients.has(ClientId)) {
+    Socket.emit("ConnectionError", new Error("SingleTab"));
+    Socket.disconnect(true);
+    return;
+  }
+
   console.log(`Client ${ClientId} connected`);
-  ActiveClients.add(ClientId);
+  ServerState.ActiveClients.add(ClientId);
+
   Socket.on("disconnect", () => {
-    ActiveClients.delete(ClientId);
+    ServerState.ActiveClients.delete(ClientId);
     console.log(`Client ${ClientId} disconnected`);
   });
 });
 
-HTTPs.listen(3000, () => {
-  console.log("port open");
+HTTPs.listen(ServerState.Port, () => {
+  console.log("PORT OPENED ON : " + ServerState.Port);
 });
