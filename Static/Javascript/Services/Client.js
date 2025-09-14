@@ -1,5 +1,5 @@
 const ClientService = {};
 
-ClientService.ExampleFunction = function () {}
+ClientService.ExampleFunction = function () {};
 
-export { ClientService }
+export { ClientService };
