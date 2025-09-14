@@ -1,5 +1,6 @@
 import { ClientService } from './Services/Client.js';
 import { DebugService } from './Services/Debug.js';
+import { LoadService } from './Services/Load.js';
 
 let ClientId = localStorage.getItem("ClientId");
 if (!ClientId) {
@@ -14,14 +15,6 @@ const Socket = io("https://kaplay.onrender.com/", {
   },
 });
 
-kaplay({
-    crisp: true,
-    background: [0, 255, 0],
-    canvas: document.getElementById("KaplayCanvas"),
-    letterBox: true,
-    maxFPS: 60,
-});
-
 Socket.on("ConnectionError", (ErrorMessage) => {
   if (ErrorMessage == "SingleTab") {
     alert("You already have this app open in another tab.");
@@ -30,3 +23,4 @@ Socket.on("ConnectionError", (ErrorMessage) => {
 });
 
 DebugService.ErudaConsole();
+LoadService.LoadKaplay();

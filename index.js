@@ -10,8 +10,8 @@ var StaticPath = Path.join(__dirname, "Static");
 Application.use(Express.static(StaticPath));
 
 const ServerState = {
-  "ActiveClients": new Set(),
-  "Port": process.env.PORT || 3000,
+  ActiveClients: new Set(),
+  Port: process.env.PORT || 3000,
 };
 
 IO.on("connection", (Socket) => {
@@ -22,7 +22,7 @@ IO.on("connection", (Socket) => {
     Socket.disconnect(true);
     return;
   } else {
-    console.log(`Client ${ClientId} Loaded`);
+    console.log(`Client ${ClientId} Connected`);
   }
 
   if (ServerState.ActiveClients.has(ClientId)) {
@@ -31,7 +31,6 @@ IO.on("connection", (Socket) => {
     return;
   }
 
-  console.log(`Client ${ClientId} connected`);
   ServerState.ActiveClients.add(ClientId);
 
   Socket.on("disconnect", () => {
