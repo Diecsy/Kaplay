@@ -11,7 +11,7 @@ Application.use(Express.static(StaticPath));
 
 const ServerState = {
   "ActiveClients": new Set(),
-  "Port": process.env.PORT || 3000,
+  "Port": 3000,
 };
 
 IO.on("connection", (Socket) => {
