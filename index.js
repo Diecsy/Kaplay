@@ -1,5 +1,6 @@
-var Application = require("express")();
 var Express = require("express");
+
+var Application = Express();
 var Path = require("path");
 
 var HTTPs = require("http").createServer(Application);
@@ -12,7 +13,11 @@ const ActiveClients = new Set();
 const ServerState = {};
 
 IO.on("connection", (Socket) => {
-    const ClientId = Socket.handshake.auth.clientId;
+    //const ClientId = Socket.handshake.auth.clientId;
+
+    console.log(`Client disconnected`);
+
+    return
 
     if (!ClientId) {
         console.log(`Client ${ClientId} disconnected`);
