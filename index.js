@@ -1,10 +1,10 @@
 const Express = require("express");
 const Path = require("path");
-const HTTPs = require("http")
+const HTTP = require("http").createServer;
 const SocketIO = require("socket.io");
 
 const Application = Express();
-const Server = HTTPs.createServer(Application);
+const Server = HTTP(Application);
 const IO = SocketIO(Server);
 
 const StaticPath = Path.join(__dirname, "Static");
@@ -17,8 +17,8 @@ const ServerState = {
 };
 
 IO.on("connection", (Socket) => {
-  const Client = Socket.handshake.auth?.Client;
-  const ClientId = Client?.ClientId;
+  const Client = Socket.handshake.auth.Client;
+  const ClientId = Client.ClientId;
 
   if (!ClientId) {
     console.log(`Client missing ClientId, disconnecting`);

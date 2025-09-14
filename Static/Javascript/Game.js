@@ -9,7 +9,7 @@ if (!ClientId) {
   localStorage.setItem("ClientId", ClientId);
 }
 
-const Socket = io("https://kaplay.onrender.com/", {
+const Socket = io("https://kaplay.onrender.com", {
   reconnectionDelayMax: 10000,
   auth: {
     Client: {
@@ -24,12 +24,12 @@ LoadService.LoadKaplay();
 SceneService.LoadScenes();
 
 Socket.on("ConnectionError", (ErrorMessage) => {
-  if (ErrorMessage == "SingleTab") {
+  if (ErrorMessage === "SingleTab") {
     alert("You already have this app open in another tab.");
-    window.close();
+    document.body.innerHTML = "<h2>Already open in another tab</h2>";
   }
 });
 
 setInterval(() => {
-    Socket.emit('ServerPacket', { Name = "Player" });
+  Socket.emit("ServerPacket", { Name: "Player" });
 }, 1000 / 60);
