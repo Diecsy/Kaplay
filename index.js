@@ -1,44 +1,44 @@
-var Express = require("express");
+const Express = require("express");
+const Path = require("path");
+const HTTP = require("http").createServer;
+const SocketIO = require("socket.io");
 
-var Application = Express();
-var Path = require("path");
+const Application = Express();
+const Server = HTTP(Application);
+const IO = SocketIO(Server);
 
-var HTTPs = require("http").createServer(Application);
-var IO = require("socket.io")(HTTPs);
-
-var StaticPath = Path.join(__dirname, "Static");
+const StaticPath = Path.join(__dirname, "Static");
 Application.use(Express.static(StaticPath));
 
 const ServerState = {
   ActiveClients: new Set(),
   ActiveMatches: new Set(),
-  Port: process.env.PORT || 80,
+  Port: process.env.PORT || 3000, // safer default than 80
 };
 
 IO.on("connection", (Socket) => {
-  const Client = Socket.handshake.auth.Client;
-  let ClientId = Client.ClientId;
+  const Client = Socket.handshake.auth?.Client;
+  const ClientId = Client?.ClientId;
 
   if (!ClientId) {
-    console.log(`Client ${ClientId} disconnected`);
+    console.log(`Client missing ClientId, disconnecting`);
     Socket.disconnect(true);
     return;
-  } else {
-    console.log(`Client ${ClientId} Connected`);
   }
 
   if (ServerState.ActiveClients.has(ClientId)) {
+    console.log(`Duplicate ClientId ${ClientId}, rejecting connection`);
     Socket.emit("ConnectionError", "SingleTab");
     Socket.disconnect(true);
     return;
   }
 
+  console.log(`Client ${ClientId} connected`);
   ServerState.ActiveClients.add(ClientId);
 
   Socket.on("ServerPacket", (Packet) => {
-    if (!Packet || !Packet["Name"]) {
-      return;
-    };
+    if (!Packet?.Name) return;
+    // Handle packet here
   });
 
   Socket.on("disconnect", () => {
@@ -47,6 +47,6 @@ IO.on("connection", (Socket) => {
   });
 });
 
-HTTPs.listen(ServerState.Port, () => {
-  console.log("PORT OPENED ON : *" + ServerState.Port);
+Server.listen(ServerState.Port, () => {
+  console.log(`PORT OPENED ON: *${ServerState.Port}`);
 });
