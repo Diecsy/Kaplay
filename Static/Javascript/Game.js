@@ -7,9 +7,8 @@ if (!ClientId) {
   localStorage.setItem("ClientId", ClientId);
 }
 
-const Socket = io("35.160.120.126:3000", {
-  Auth: { ClientId }
-});
+const Socket = io();
+
 
 kaplay({
     crisp: true,
