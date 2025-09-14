@@ -11,7 +11,7 @@ Application.use(Express.static(StaticPath));
 
 const ServerState = {
   ActiveClients: new Set(),
-  ActiveMatches: {},
+  ActiveMatches: new Set(),
   Port: process.env.PORT || 3000,
 };
 
