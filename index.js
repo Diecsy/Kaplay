@@ -13,29 +13,21 @@ const ActiveClients = new Set();
 const ServerState = {};
 
 IO.on("connection", (Socket) => {
-    console.log('ok')
+  const ClientId = Socket.handshake.auth.clientId;
 
-    //const ClientId = Socket.handshake.auth.clientId;
-
-    console.log(`Client disconnected`);
-
-    return
-
-    if (!ClientId) {
-        console.log(`Client ${ClientId} disconnected`);
-        Socket.disconnect(true);
-        return;
-    }
-
-    ActiveClients.add(ClientId);
-    console.log(`Client ${ClientId} connected`);
-
-    Socket.on("disconnect", () => {
-        ActiveClients.delete(ClientId);
-        console.log(`Client ${ClientId} disconnected`);
-    });
+  if (!ClientId) {
+    console.log(`Client ${ClientId} disconnected`);
+    Socket.disconnect(true);
+    return;
+  }
+  console.log(`Client ${ClientId} connected`);
+  ActiveClients.add(ClientId);
+  Socket.on("disconnect", () => {
+    ActiveClients.delete(ClientId);
+    console.log(`Client ${ClientId} disconnected`);
+  });
 });
 
 HTTPs.listen(3000, () => {
-    console.log("port open");
+  console.log("port open");
 });
