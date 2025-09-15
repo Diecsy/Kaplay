@@ -6,7 +6,7 @@ const { Server } = require("socket.io");
 const Application = Express();
 const HTTPServer = HTTP.createServer(Application);
 
-const IO = new Server(Server, {
+const IO = new Server(HTTPServer, {
   cors: {
     origin: ["https://kaplay.onrender.com", "http://localhost:3000"],
     methods: ["GET", "POST"],
@@ -23,21 +23,19 @@ const ServerState = {
   Port: process.env.PORT || 3000,
 };
 
-IO.on("connection", (Socket) => {
-  console.log("Socket connected:", Socket.id);
+IO.on("connection", (socket) => {
+  console.log("Socket connected:", socket.id);
 
-  // safe access to handshake auth
   const ClientInfo = socket.handshake?.auth?.Client;
   const ClientId = ClientInfo?.ClientId;
 
   if (!ClientId) {
-    console.log(`Connection rejected (missing ClientId) - socket: ${Socket.id}`);
-    Socket.emit("ConnectionError", "MissingClientId");
-    Socket.disconnect(true);
+    console.log(`Connection rejected (missing ClientId) - socket: ${socket.id}`);
+    socket.emit("ConnectionError", "MissingClientId");
+    socket.disconnect(true);
     return;
   }
 
-  // deny duplicate clientId (single tab)
   if (ServerState.ActiveClients.has(ClientId)) {
     console.log(`Duplicate ClientId ${ClientId} attempted connection; rejecting.`);
     socket.emit("ConnectionError", "SingleTab");
@@ -46,20 +44,21 @@ IO.on("connection", (Socket) => {
   }
 
   ServerState.ActiveClients.add(ClientId);
-  console.log(`Client ${ClientId} connected (socket ${Socket.id})`);
+  console.log(`Client ${ClientId} connected (socket ${socket.id})`);
 
-  Socket.on("ServerPacket", (Packet) => {
+  socket.on("ServerPacket", (Packet) => {
     if (!Packet || typeof Packet.Name !== "string") {
       return;
     }
+    // handle packet here for later :3
   });
 
-  Socket.on("disconnect", (Reason) => {
+  socket.on("disconnect", (Reason) => {
     ServerState.ActiveClients.delete(ClientId);
-    console.log(`Client ${ClientId} disconnected (socket ${Socket.id}). Reason: ${Reason}`);
+    console.log(`Client ${ClientId} disconnected (socket ${socket.id}). Reason: ${Reason}`);
   });
 
-  Socket.on("error", (Error) => {
+  socket.on("error", (Error) => {
     console.error("Socket error:", Error);
   });
 });
