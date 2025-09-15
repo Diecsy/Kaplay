@@ -1,7 +1,8 @@
 const LoadService = {};
 
 LoadService.LoadAssets = function () {
-    alert("Loading");
+    loadBean();
+    go("Testing");
 };
 
 LoadService.LoadKaplay = function () {
