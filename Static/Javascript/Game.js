@@ -39,6 +39,7 @@ Socket.on("connect_error", (err) => {
 Socket.on("ConnectionError", (errorMessage) => {
   console.warn("ConnectionError:", errorMessage);
   if (errorMessage === "SingleTab") {
+    alert("You may only have one tab open at once.")
     window.close();
   } else {
     document.body.innerHTML = `<h2>Connection error: ${String(errorMessage)}</h2>`;

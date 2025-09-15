@@ -4,7 +4,7 @@ Character.Skills = {
         Name: "Repent",
         Description: "Up air",
         Function: function () {
-        console.log("Working");
+            console.log("Working");
         },
     },
 
@@ -12,7 +12,7 @@ Character.Skills = {
         Name: "Basic Punch",
         Description: "Basic Punch",
         Function: function () {
-        console.log("Basic Punch");
+            console.log("Basic Punch");
         },
     },
 
@@ -20,7 +20,7 @@ Character.Skills = {
         Name: "Heavy Punch",
         Description: "Heavy Punch",
         Function: function () {
-        console.log("Heavy Punch");
+            console.log("Heavy Punch");
         },
     },
 
@@ -28,7 +28,7 @@ Character.Skills = {
         Name: "Right Dash",
         Description: "Right Dash",
         Function: function () {
-        console.log("Right dash");
+            console.log("Right dash");
         },
     },
 
@@ -36,7 +36,7 @@ Character.Skills = {
         Name: "Left Dash",
         Description: "Left Dash",
         Function: function () {
-        console.log("Left dash");
+            console.log("Left dash");
         },
     },
 };
