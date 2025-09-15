@@ -15,11 +15,11 @@ SceneService.LoadScenes = function () {
             rotate(0),
         ]);
 
-        onKeyDown("left", () => {
+        onKeyDown("a", () => {
             bean.move(-PLAYER_SPEED, 0);
         });
 
-        onKeyDown("right", () => {
+        onKeyDown("d", () => {
             bean.move(PLAYER_SPEED, 0);
         });
     });

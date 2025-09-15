@@ -20,7 +20,7 @@ const Socket = io("https://kaplay.onrender.com", {
   },
 });
 
-DebugService.ErudaConsole.();
+DebugService.ErudaConsole();
 LoadService.LoadKaplay();
 SceneService.LoadScenes();
 
