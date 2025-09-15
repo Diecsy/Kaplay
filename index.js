@@ -4,7 +4,7 @@ const HTTP = require("http");
 const { Server } = require("socket.io");
 
 const Application = express();
-const Server = http.createServer(Application);
+const HTTPServer = http.createServer(Application);
 
 const IO = new Server(Server, {
   cors: {
@@ -64,6 +64,6 @@ IO.on("connection", (Socket) => {
   });
 });
 
-Server.listen(ServerState.Port, () => {
+HTTPServer.listen(ServerState.Port, () => {
   console.log(`Server listening on port ${ServerState.Port}`);
 });
