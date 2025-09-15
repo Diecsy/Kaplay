@@ -24,7 +24,9 @@ DebugService.ErudaConsole();
 LoadService.LoadKaplay();
 SceneService.LoadScenes();
 
-go("Testing");
+setTimeout(() => {
+  go("Testing");
+}, 3000);
 
 Socket.on("connect", () => {
   console.log("Socket connected, id:", Socket.id);
