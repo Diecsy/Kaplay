@@ -7,12 +7,13 @@ LoadService.LoadAssets = function () {
 LoadService.LoadKaplay = function () {
     kaplay({
         crisp: true,
-        background: [255, 255, 255],
         canvas: document.getElementById("KaplayCanvas"),
+        background: [141, 183, 255],
+        debugKey: "`",
+        global: true,
         letterBox: true,
         maxFPS: 60,
     });
-
     LoadService.LoadAssets();
 };
 

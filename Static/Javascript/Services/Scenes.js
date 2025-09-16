@@ -2,18 +2,6 @@ import { EffectService } from "./Effects";
 import { ClientService } from "./Client";
 const SceneService = {};
 
-const PLAYER_SPEED = 640;
-const JUMP_FORCE = 700;
-
-const DASH_SPEED = 1400;
-const DASH_TIME = 0.15;
-const BACKDASH_SPEED = -1000;
-const UPDASH_FORCE = -1000;
-const DASH_COOLDOWN = 0.25;
-
-const MAX_INPUT = 10;
-const INPUT_TIME = 0.4;
-
 SceneService.LoadScenes = function () {
     scene("Testing", () => {
         setGravity(1600);
@@ -153,21 +141,23 @@ SceneService.LoadScenes = function () {
 
         onKeyDown("a", () => {
             if (!Character.Dashing && Character.state !== "Dashing") {
-                Character.move(-PLAYER_SPEED, 0);
+                Character.move(-ClientService.Shared.PLAYER_SPEED, 0);
                 Character.facing = -1;
             }
         });
 
         onKeyDown("d", () => {
             if (!Character.Dashing && Character.state !== "Dashing") {
-                Character.move(PLAYER_SPEED, 0);
+                Character.move(ClientService.Shared.PLAYER_SPEED, 0);
                 Character.facing = 1;
             }
         });
 
+
+
         onKeyPress("w", () => {
             if (Character.isGrounded() && !Character.dashing && Character.state !== "Dashing") {
-                Character.jump(JUMP_FORCE);
+                Character.jump(ClientService.Shared.JUMP_FORCE);
             }
         });
     });
