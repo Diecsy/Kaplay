@@ -1,4 +1,4 @@
-import SceneService from './Scenes.js';
+import { SceneService }} from './Scenes.js';
 const LoadService = {};
 
 LoadService.LoadAssets = function () {
