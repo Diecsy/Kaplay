@@ -14,7 +14,6 @@ LoadService.LoadKaplay = function () {
         debugKey: "`",
         global: true,
         letterBox: true,
-        maxFPS: 60,
     });
 
     console.log("loaded");
