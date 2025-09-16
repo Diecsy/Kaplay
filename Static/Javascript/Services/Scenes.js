@@ -4,6 +4,16 @@ import { ClientService } from "./Client";
 const SceneService = {};
 
 const PLAYER_SPEED = 640;
+const JUMP_FORCE = 700;
+
+const DASH_SPEED = 1400;
+const DASH_TIME = 0.15;
+const BACKDASH_SPEED = -1000;
+const UPDASH_FORCE = -1000;
+const DASH_COOLDOWN = 0.25;
+
+const MAX_INPUT = 10;
+const INPUT_TIME = 0.4;
 
 SceneService.LoadScenes = function () {
     scene("Testing", () => {
