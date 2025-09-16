@@ -22,7 +22,7 @@ ClientService.Dash = function (Character, Type) {
     Character.state = "Dashing";
     Character.Dashing = true;
     Character.DashTimer = PhysicsService.Shared.DASH_TIME;
-    Character.Cooldowns.DashCooldown = DASH_COOLDOWN;
+    Character.Cooldowns.DashCooldown = PhysicsService.Shared.DASH_COOLDOWN;
 
     if (Type === "Forwards") {
         Character.vel.y = 0;

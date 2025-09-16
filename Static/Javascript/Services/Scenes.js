@@ -143,21 +143,21 @@ SceneService.LoadScenes = function () {
         onKeyDown("a", () => {
             if (!Character.Dashing && Character.state !== "Dashing") {
                 Character.move(-PhysicsService.Shared.PLAYER_SPEED, 0);
-                Character.facing = -1;
+                Character.Facing = -1;
             }
         });
 
         onKeyDown("d", () => {
             if (!Character.Dashing && Character.state !== "Dashing") {
                 Character.move(PhysicsService.Shared.PLAYER_SPEED, 0);
-                Character.facing = 1;
+                Character.Facing = 1;
             }
         });
 
 
 
         onKeyPress("w", () => {
-            if (Character.isGrounded() && !Character.dashing && Character.state !== "Dashing") {
+            if (Character.isGrounded() && !Character.Dashing && Character.state !== "Dashing") {
                 Character.jump(PhysicsService.Shared.JUMP_FORCE);
             }
         });
