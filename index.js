@@ -47,9 +47,11 @@ IO.on("connection", (socket) => {
   console.log(`Client ${ClientId} connected (socket ${socket.id})`);
 
   socket.on("ServerPacket", (Packet) => {
-    if (!Packet || typeof Packet.Name !== "string") {
+    if (!Packet || typeof Packet.Name !== "string" || Packet == undefined || Packet["Name"] == undefined) {
       return;
-    }
+    };
+
+
     // handle packet here for later :3
   });
 
