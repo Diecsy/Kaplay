@@ -112,11 +112,11 @@ SceneService.LoadScenes = function () {
         onKeyPress((Key) => {
             InputBuffer.push({ KeyCode: Key.toUpperCase(), Time: time() });
 
-            if (InputBuffer.length > MAX_INPUT) {
+            if (InputBuffer.length > ClientService.Shared.MAX_INPUT) {
                 InputBuffer.shift();
             };
 
-            InputBuffer = InputBuffer.filter(Index => time() - Index.Time <= INPUT_TIME);
+            InputBuffer = InputBuffer.filter(Index => time() - Index.Time <= ClientService.Shared.INPUT_TIME);
 
             const Sequence = InputBuffer.map(Index => Index.KeyCode).join("");
 
