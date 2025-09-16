@@ -26,6 +26,10 @@ const Socket = io("https://kaplay.onrender.com", {
 DebugService.ErudaConsole();
 LoadService.LoadKaplay();
 
+setTimeout(() => {
+  go("Testing");
+}, 1500);
+
 Socket.on("connect", () => {
   console.log("Socket connected, id:", Socket.id);
 });
