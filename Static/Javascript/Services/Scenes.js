@@ -1,6 +1,6 @@
-import { PhysicsService } from "./Physics";
-import { EffectService } from "./Effects";
-import { ClientService } from "./Client";
+import { PhysicsService } from "./Physics.js";
+import { EffectService } from "./Effects.js";
+import { ClientService } from "./Client.js";
 const SceneService = {};
 
 SceneService.LoadScenes = function () {

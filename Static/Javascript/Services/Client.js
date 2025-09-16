@@ -1,5 +1,5 @@
-import { PhysicsService } from "./Physics";
-import { EffectService } from "./Effects";
+import { PhysicsService } from "./Physics.js";
+import { EffectService } from "./Effects.js";
 const ClientService = {};
 
 ClientService.Dash = function (Character, Type) {

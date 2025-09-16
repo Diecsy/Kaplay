@@ -1,7 +1,9 @@
+import SceneService from './Scenes.js';
 const LoadService = {};
 
 LoadService.LoadAssets = function () {
     loadBean();
+    SceneService.LoadScenes();
 };
 
 LoadService.LoadKaplay = function () {

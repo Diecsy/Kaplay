@@ -5,7 +5,11 @@ import { LoadService } from './Services/Load.js';
 
 let ClientId = localStorage.getItem("ClientId");
 if (!ClientId) {
-  ClientId = (crypto && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    ClientId = crypto.randomUUID();
+  } else {
+    ClientId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
   localStorage.setItem("ClientId", ClientId);
 }
 
@@ -21,11 +25,6 @@ const Socket = io("https://kaplay.onrender.com", {
 
 DebugService.ErudaConsole();
 LoadService.LoadKaplay();
-SceneService.LoadScenes();
-
-setTimeout(() => {
-  go("Testing");
-}, 3000);
 
 Socket.on("connect", () => {
   console.log("Socket connected, id:", Socket.id);
