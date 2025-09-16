@@ -1,6 +1,5 @@
 import { EffectService } from "./Effects";
 import { ClientService } from "./Client";
-
 const SceneService = {};
 
 const PLAYER_SPEED = 640;

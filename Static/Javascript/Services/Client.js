@@ -1,5 +1,4 @@
 import { EffectService } from "./Effects";
-
 const ClientService = {};
 
 ClientService.Dash = function (Character, Type) {
