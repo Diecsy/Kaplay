@@ -9,7 +9,6 @@ if (!ClientId) {
   localStorage.setItem("ClientId", ClientId);
 }
 
-
 const Socket = io("https://kaplay.onrender.com", {
   reconnectionDelayMax: 10000,
   auth: {

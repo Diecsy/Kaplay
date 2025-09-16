@@ -1,3 +1,4 @@
+import { PhysicsService } from "./Physics";
 import { EffectService } from "./Effects";
 const ClientService = {};
 
@@ -20,18 +21,18 @@ ClientService.Dash = function (Character, Type) {
 
     Character.state = "Dashing";
     Character.Dashing = true;
-    Character.DashTimer = ClientService.Shared.DASH_TIME;
+    Character.DashTimer = PhysicsService.Shared.DASH_TIME;
     Character.Cooldowns.DashCooldown = DASH_COOLDOWN;
 
     if (Type === "Forwards") {
         Character.vel.y = 0;
-        Character.vel.x = ClientService.Shared.DASH_SPEED;
+        Character.vel.x = PhysicsService.Shared.DASH_SPEED;
     } else if (Type === "Backwards") {
         Character.vel.y = 0;
-        Character.vel.x = ClientService.Shared.BACKDASH_SPEED;
+        Character.vel.x = PhysicsService.Shared.BACKDASH_SPEED;
     } else if (Type === "Upwards") {
         Character.vel.x = 0;
-        Character.vel.y = ClientService.Shared.UPDASH_FORCE;
+        Character.vel.y = PhysicsService.Shared.UPDASH_FORCE;
     };
 
     EffectService.SpawnAfterImage(Character);
@@ -46,20 +47,6 @@ ClientService.Dash = function (Character, Type) {
         SizeRange: [3, 6],
         LifeRange: [0.15, 0.4],
     });
-};
-
-ClientService.Shared = {
-    PLAYER_SPEED: 640,
-    JUMP_FORCE: 700,
-
-    DASH_SPEED: 1400,
-    DASH_TIME: 0.15,
-    BACKDASH_SPEED: -1000,
-    UPDASH_FORCE: -1000,
-    DASH_COOLDOWN: 0.25,
-
-    MAX_INPUT: 10,
-    INPUT_TIME: 0.4,
 };
 
 export { ClientService };

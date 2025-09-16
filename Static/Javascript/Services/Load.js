@@ -14,6 +14,9 @@ LoadService.LoadKaplay = function () {
         letterBox: true,
         maxFPS: 60,
     });
+
+    console.log("loaded");
+
     LoadService.LoadAssets();
 };
 

@@ -1,3 +1,4 @@
+import { PhysicsService } from "./Physics";
 import { EffectService } from "./Effects";
 import { ClientService } from "./Client";
 const SceneService = {};
@@ -112,11 +113,11 @@ SceneService.LoadScenes = function () {
         onKeyPress((Key) => {
             InputBuffer.push({ KeyCode: Key.toUpperCase(), Time: time() });
 
-            if (InputBuffer.length > ClientService.Shared.MAX_INPUT) {
+            if (InputBuffer.length > PhysicsService.Shared.MAX_INPUT) {
                 InputBuffer.shift();
             };
 
-            InputBuffer = InputBuffer.filter(Index => time() - Index.Time <= ClientService.Shared.INPUT_TIME);
+            InputBuffer = InputBuffer.filter(Index => time() - Index.Time <= PhysicsService.Shared.INPUT_TIME);
 
             const Sequence = InputBuffer.map(Index => Index.KeyCode).join("");
 
@@ -141,14 +142,14 @@ SceneService.LoadScenes = function () {
 
         onKeyDown("a", () => {
             if (!Character.Dashing && Character.state !== "Dashing") {
-                Character.move(-ClientService.Shared.PLAYER_SPEED, 0);
+                Character.move(-PhysicsService.Shared.PLAYER_SPEED, 0);
                 Character.facing = -1;
             }
         });
 
         onKeyDown("d", () => {
             if (!Character.Dashing && Character.state !== "Dashing") {
-                Character.move(ClientService.Shared.PLAYER_SPEED, 0);
+                Character.move(PhysicsService.Shared.PLAYER_SPEED, 0);
                 Character.facing = 1;
             }
         });
@@ -157,7 +158,7 @@ SceneService.LoadScenes = function () {
 
         onKeyPress("w", () => {
             if (Character.isGrounded() && !Character.dashing && Character.state !== "Dashing") {
-                Character.jump(ClientService.Shared.JUMP_FORCE);
+                Character.jump(PhysicsService.Shared.JUMP_FORCE);
             }
         });
     });
