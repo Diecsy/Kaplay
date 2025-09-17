@@ -123,8 +123,13 @@ Socket.on("ClientPacket", (Packet) => {
       "Client"
     ]);
   } else if (Packet.Name == "DashSprite") {
-    const Sprite = get(Packet.SpriteTag);
-    ClientService.Dash(Sprite[0], Packet.Type);
+    const Sprites = get(Packet.SpriteTag);
+
+    if (Packet.SpriteTag !== ClientId) {
+      for (const Sprite of Sprites) {
+        ClientService.Dash(Sprite, Packet.Type);
+      }
+    }
   } else if (Packet.Name == "MoveSprite") {
     const Sprites = get(Packet.SpriteTag);
 
@@ -140,6 +145,16 @@ Socket.on("ClientPacket", (Packet) => {
       for (const Sprite of Sprites) {
         if (Sprite.pos !== undefined) {
           Sprite.jump(Packet.Force);
+        }
+      }
+    }
+  } else if (Packet.Name == "PosSprite") {
+    const Sprites = get(Packet.SpriteTag);
+
+    if (Packet.SpriteTag !== ClientId) {
+      for (const Sprite of Sprites) {
+        if (Sprite.pos !== undefined) {
+          Sprite.pos = vec2(Packet.x, Packet.y);
         }
       }
     }

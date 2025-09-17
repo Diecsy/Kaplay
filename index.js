@@ -66,11 +66,13 @@ IO.on("connection", (socket) => {
         }
       }
     } else if (Packet.Name == "MoveSprite") {
-      // Moves a specific sprite between the whole server
-
       IO.emit("ClientPacket", { Name: "MoveSprite", SpriteTag: Packet.SpriteTag, Speed: Packet.Speed});
     } else if (Packet.Name == "JumpSprite") {
       IO.emit("ClientPacket", { Name: "JumpSprite", SpriteTag: Packet.SpriteTag, Force: Packet.Force});
+    } else if (Packet.Name == "DashSprite") {
+      IO.emit("ClientPacket", { Name: "DashSprite", SpriteTag: Packet.SpriteTag, Type: Packet.Type});
+    } else if (Packet.Name == "PosSprite") {
+      IO.emit("ClientPacket", { Name: "PosSprite", SpriteTag: Packet.SpriteTag, X: Packet.X, Y: Packer.Y});
     }
   });
 

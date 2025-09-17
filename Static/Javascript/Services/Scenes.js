@@ -109,9 +109,27 @@ SceneService.LoadScenes = function () {
         };
 
         const DashCombinations = {
-            "DD": () => ClientService.Dash(Character, "Forwards"),
-            "AA": () => ClientService.Dash(Character, "Backwards"),
-            "WW": () => ClientService.Dash(Character, "Upwards"),
+            "DD": () => function() {
+                if (Socket && Socket.connected) {
+                    Socket.emit("ServerPacket", { Name: "DashSprite", SpriteTag: localStorage.getItem("ClientId").toString(), Type: "Forwards"});
+                }
+
+                ClientService.Dash(Character, "Forwards");
+            },
+            "AA": () => function() {
+                if (Socket && Socket.connected) {
+                    Socket.emit("ServerPacket", { Name: "DashSprite", SpriteTag: localStorage.getItem("ClientId").toString(), Type: "Backwards"});
+                }
+
+                ClientService.Dash(Character, "Backwards");
+            },
+            "WW": () => function() {
+                if (Socket && Socket.connected) {
+                    Socket.emit("ServerPacket", { Name: "DashSprite", SpriteTag: localStorage.getItem("ClientId").toString(), Type: "Upwards"});
+                }
+
+                ClientService.Dash(Character, "Upwards");
+            },
         };
 
         onKeyPress((Key) => {
@@ -169,6 +187,14 @@ SceneService.LoadScenes = function () {
                 Character.jump(PhysicsService.Shared.JUMP_FORCE);
                 if (Socket && Socket.connected) {
                     Socket.emit("ServerPacket", { Name: "JumpSprite", SpriteTag: localStorage.getItem("ClientId").toString(), Force: PhysicsService.Shared.JUMP_FORCE});
+                }
+            }
+        });
+
+        Character.onUpdate(() => {
+            if (Character.vel.x === 0 && Character.vel.y === 0) {
+                if (Socket && Socket.connected) {
+                    Socket.emit("ServerPacket", { Name: "PosSprite", SpriteTag: localStorage.getItem("ClientId").toString(), X: Character.pos.x, Y: Character.pos.y);
                 }
             }
         });
