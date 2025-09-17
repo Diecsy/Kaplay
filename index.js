@@ -69,7 +69,7 @@ IO.on("connection", (socket) => {
       // Moves a specific sprite between the whole server
 
       if (Packet.Type !== undefined) {
-        IO.emit("ClientPacket", { Name: "MoveSprite", SpriteTag: Packet.SpriteTag });
+        IO.emit("ClientPacket", { Name: "MoveSprite", SpriteTag: Packet.SpriteTag, X: Packet.X, Y: Packet.Y });
       }
     }
   });

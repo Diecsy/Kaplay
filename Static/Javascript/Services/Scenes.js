@@ -166,7 +166,7 @@ SceneService.LoadScenes = function () {
 
         onDraw(() => {
             if (Socket && Socket.connected) {
-                Socket.emit("ServerPacket", { Name: "MoveSprite", SpriteTag: localStorage.getItem("ClientId").toString() });
+                Socket.emit("ServerPacket", { Name: "MoveSprite", SpriteTag: localStorage.getItem("ClientId").toString(), X: Character.pos.x, Y: Character.pos.y });
             }
         });
 
