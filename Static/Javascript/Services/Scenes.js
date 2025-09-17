@@ -34,8 +34,9 @@ SceneService.LoadScenes = function () {
                     DashCooldown: 0
                 }
             },
-            "Player"
         ]);
+
+        Character.tag("Player");
 
         add([
             rect(width(), 24),
