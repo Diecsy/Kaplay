@@ -54,6 +54,9 @@ IO.on("connection", (socket) => {
 
     // handle packet here for later :3
 
+    console.log(Packet);
+    console.log(Packet.Name);
+
     if (Packet.Name == "Wruff") {
       socket.emit("ClientPacket", { Name: "Dusty" });
     }
