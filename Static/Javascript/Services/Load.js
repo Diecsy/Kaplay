@@ -10,7 +10,6 @@ LoadService.LoadKaplay = function () {
         canvas: document.getElementById("KaplayCanvas"),
         background: [141, 183, 255],
         debugKey: "`",
-        global: true,
         letterBox: true,
     });
 
