@@ -1,6 +1,7 @@
 import { PhysicsService } from "./Physics.js";
 import { EffectService } from "./Effects.js";
 import { ClientService } from "./Client.js";
+
 const SceneService = {};
 
 SceneService.LoadScenes = function () {
@@ -31,12 +32,13 @@ SceneService.LoadScenes = function () {
                 DashTimer: 0,
                 Facing: 1,
                 Cooldowns: {
-                    DashCooldown: 0
-                }
+                    DashCooldown: 0,
+                },
             },
             "LocalClient",
         ]);
 
+        // Platforms
         add([
             rect(width(), 24),
             area(),
@@ -53,6 +55,7 @@ SceneService.LoadScenes = function () {
             body({ isStatic: true }),
         ]);
 
+        // Landing effects
         Character.onGround(() => {
             Character.CanUpDash = true;
             EffectService.SpawnDust(Character.pos.add(vec2(0, Character.height / 2)), {
@@ -65,6 +68,7 @@ SceneService.LoadScenes = function () {
 
         let DustCooldown = 0;
 
+        // Dust while moving
         onUpdate(() => {
             if (Character.isGrounded() && !Character.Dashing && Character.state !== "Dashing" && (isKeyDown("a") || isKeyDown("d"))) {
                 DustCooldown -= dt();
@@ -85,12 +89,13 @@ SceneService.LoadScenes = function () {
             }
         });
 
+        // Dash state management
         onUpdate(() => {
             if (Character.Cooldowns.DashCooldown > 0) {
                 Character.Cooldowns.DashCooldown -= dt();
             }
 
-            if (Character.state == "Dashing" || Character.Dashing == true) {
+            if (Character.state === "Dashing" || Character.Dashing) {
                 Character.DashTimer -= dt();
 
                 if (Character.DashTimer <= 0) {
@@ -101,47 +106,36 @@ SceneService.LoadScenes = function () {
             }
         });
 
+        // Input buffer
         let InputBuffer = [];
 
         const SkillCombinations = {
             "WDD": () => debug.log("Sample1"),
-            "SDS": () => debug.log("Sanple2"),
+            "SDS": () => debug.log("Sample2"),
         };
 
         const DashCombinations = {
             "DD": () => {
-                if (Socket && Socket.connected) {
-                    Socket.emit("Packet", {
-                        Name: "DashSprite",
-                        SpriteTag: localStorage.getItem("ClientId").toString(),
-                        Type: "Forwards"
-                    });
-                }
-
+                ClientService.SendPacket("DashSprite", {
+                    SpriteTag: localStorage.getItem("ClientId").toString(),
+                    Type: "Forwards",
+                });
                 ClientService.Dash(Character, "Forwards");
             },
 
             "AA": () => {
-                if (Socket && Socket.connected) {
-                    Socket.emit("Packet", {
-                        Name: "DashSprite",
-                        SpriteTag: localStorage.getItem("ClientId").toString(),
-                        Type: "Backwards"
-                    });
-                }
-
+                ClientService.SendPacket("DashSprite", {
+                    SpriteTag: localStorage.getItem("ClientId").toString(),
+                    Type: "Backwards",
+                });
                 ClientService.Dash(Character, "Backwards");
             },
 
             "WW": () => {
-                if (Socket && Socket.connected) {
-                    Socket.emit("Packet", {
-                        Name: "DashSprite",
-                        SpriteTag: localStorage.getItem("ClientId").toString(),
-                        Type: "Upwards"
-                    });
-                }
-
+                ClientService.SendPacket("DashSprite", {
+                    SpriteTag: localStorage.getItem("ClientId").toString(),
+                    Type: "Upwards",
+                });
                 ClientService.Dash(Character, "Upwards");
             },
         };
@@ -151,7 +145,7 @@ SceneService.LoadScenes = function () {
 
             if (InputBuffer.length > PhysicsService.Shared.MAX_INPUT) {
                 InputBuffer.shift();
-            };
+            }
 
             InputBuffer = InputBuffer.filter(Index => time() - Index.Time <= PhysicsService.Shared.INPUT_TIME);
 
@@ -176,15 +170,13 @@ SceneService.LoadScenes = function () {
             }
         });
 
+        // Movement
         onKeyDown("a", () => {
             if (!Character.Dashing && Character.state !== "Dashing") {
-                if (Socket && Socket.connected) {
-                    Socket.emit("Packet", {
-                        Name: "MoveSprite",
-                        SpriteTag: localStorage.getItem("ClientId").toString(),
-                        Speed: -PhysicsService.Shared.PLAYER_SPEED
-                    });
-                }
+                ClientService.SendPacket("MoveSprite", {
+                    SpriteTag: localStorage.getItem("ClientId").toString(),
+                    Speed: -PhysicsService.Shared.PLAYER_SPEED,
+                });
                 Character.move(-PhysicsService.Shared.PLAYER_SPEED, 0);
                 Character.Facing = -1;
             }
@@ -192,51 +184,40 @@ SceneService.LoadScenes = function () {
 
         onKeyDown("d", () => {
             if (!Character.Dashing && Character.state !== "Dashing") {
-                if (Socket && Socket.connected) {
-                    Socket.emit("Packet", {
-                        Name: "MoveSprite",
-                        SpriteTag: localStorage.getItem("ClientId").toString(),
-                        Speed: PhysicsService.Shared.PLAYER_SPEED
-                    });
-                }
+                ClientService.SendPacket("MoveSprite", {
+                    SpriteTag: localStorage.getItem("ClientId").toString(),
+                    Speed: PhysicsService.Shared.PLAYER_SPEED,
+                });
                 Character.move(PhysicsService.Shared.PLAYER_SPEED, 0);
                 Character.Facing = 1;
             }
         });
 
+        // Jump
         onKeyPress("w", () => {
             if (Character.isGrounded() && !Character.Dashing && Character.state !== "Dashing") {
                 Character.jump(PhysicsService.Shared.JUMP_FORCE);
-                if (Socket && Socket.connected) {
-                    Socket.emit("Packet", {
-                        Name: "JumpSprite",
-                        SpriteTag: localStorage.getItem("ClientId").toString(),
-                        Force: PhysicsService.Shared.JUMP_FORCE
-                    });
-                }
+                ClientService.SendPacket("JumpSprite", {
+                    SpriteTag: localStorage.getItem("ClientId").toString(),
+                    Force: PhysicsService.Shared.JUMP_FORCE,
+                });
             }
         });
 
+        // Idle position update
         Character.onUpdate(() => {
             if (Character.vel.x === 0 && Character.vel.y === 0) {
-                if (Socket && Socket.connected) {
-                    Socket.emit("Packet", {
-                        Name: "PosSprite",
-                        SpriteTag: localStorage.getItem("ClientId").toString(),
-                        X: Character.pos.x,
-                        Y: Character.pos.y
-                    });
-                }
+                ClientService.SendPacket("PosSprite", {
+                    SpriteTag: localStorage.getItem("ClientId").toString(),
+                    X: Character.pos.x,
+                    Y: Character.pos.y,
+                });
             }
         });
 
-        if (Socket && Socket.connected) {
-            Socket.emit("Packet", {
-                Name: "FetchClients",
-                Type: "CreateSprites"
-            });
-        }
+        // Ask server for all players on join
+        ClientService.SendPacket("FetchClients", { Type: "CreateSprites" });
     });
 };
 
-export { SceneService }
+export { SceneService };
