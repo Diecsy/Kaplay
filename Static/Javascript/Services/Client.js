@@ -1,99 +1,157 @@
 import { PhysicsService } from "./Physics.js";
 import { EffectService } from "./Effects.js";
-const ClientService = {};
 
-const Clients = []
+const ClientService = {
+    Clients: {},
+};
 
-ClientService.InitateClient = function () {
-    const ClientId = localStorage.getItem("ClientId");
+ClientService.InitiateClient = function () {
+    const id = localStorage.getItem("ClientId");
+    if (!id) throw new Error("No ClientId found!");
 
-    if (!ClientId) {
-        return;
+    if (!this.Clients[id]) {
+        const socket = io();
+
+        this.Clients[id] = {
+            Id: id,
+            Socket: socket,
+        };
+
+        socket.on("Packet", (packet) => {
+            this.HandlePacket(packet);
+        });
     }
 
-    const ClientInfo = {
-        Socket: io("https://kaplay.onrender.com", {
-            reconnectionDelayMax: 10000,
-            auth: {
-                Client: {
-                    Name: "CustomReplicatedClient",
-                    ClientId: ClientId
+    return this.Clients[id];
+};
+
+// Unified packet sender
+ClientService.SendPacket = function (name, data = {}) {
+    const id = localStorage.getItem("ClientId");
+    const client = this.Clients[id];
+    if (client && client.Socket && client.Socket.connected) {
+        client.Socket.emit("Packet", {
+            Name: name,
+            SpriteTag: id,
+            ...data,
+        });
+    }
+};
+
+// Handle packets from server
+ClientService.HandlePacket = function (packet) {
+    if (!packet || !packet.Name) return;
+
+    switch (packet.Name) {
+        case "RefreshClientSprites": {
+            const ClientSprites = get("Client");
+            for (const Sprite of ClientSprites) destroy(Sprite);
+
+            for (const OtherId of packet.Clients || []) {
+                add([
+                    sprite("bean"),
+                    area(),
+                    anchor("center"),
+                    pos(120, 80),
+                    body(),
+                    color(rgb(255, 255, 255)),
+                    rotate(0),
+                    state("Idle", ["Idle", "Dashing", "Stunned", "TrueStunned", "Moving"]),
+                    {
+                        CanUpDash: true,
+                        Dashing: false,
+                        DashTimer: 0,
+                        Facing: 1,
+                        Cooldowns: { DashCooldown: 0 },
+                    },
+                    OtherId,
+                    "Client",
+                ]);
+            }
+            break;
+        }
+
+        case "CreatePlayerSprite": {
+            add([
+                sprite("bean"),
+                area(),
+                anchor("center"),
+                pos(120, 80),
+                body(),
+                color(rgb(255, 255, 255)),
+                rotate(0),
+                state("Idle", ["Idle", "Dashing", "Stunned", "TrueStunned", "Moving"]),
+                {
+                    CanUpDash: true,
+                    Dashing: false,
+                    DashTimer: 0,
+                    Facing: 1,
+                    Cooldowns: { DashCooldown: 0 },
+                },
+                packet.SpriteTag,
+                "Client",
+            ]);
+            break;
+        }
+
+        case "DashSprite": {
+            if (packet.SpriteTag !== localStorage.getItem("ClientId")) {
+                for (const Sprite of get(packet.SpriteTag)) {
+                    this.Dash(Sprite, packet.Type);
                 }
             }
-        }),
-
-        ClientId: ClientId,
-    };
-
-    console.log(ClientInfo);
-
-    Clients.push(ClientInfo);
-
-    return ClientInfo;
-}
-
-ClientService.GetAllClients = function() {
-    return Clients;
-}
-
-ClientService.GetClient = function(ClientId) {
-    if (!ClientId) {
-        return;
-    }
-
-    for (let Index = 0; Index < Clients.length; Index++) {
-        if (Clients[Index] !== undefined && Clients[Index]["ClientId"] == ClientId) {
-            console.log(Clients[Index]);
-            return Clients[Index]
+            break;
         }
+
+        case "MoveSprite": {
+            if (packet.SpriteTag !== localStorage.getItem("ClientId")) {
+                for (const Sprite of get(packet.SpriteTag)) {
+                    Sprite.move(packet.Speed, 0);
+                }
+            }
+            break;
+        }
+
+        case "JumpSprite": {
+            if (packet.SpriteTag !== localStorage.getItem("ClientId")) {
+                for (const Sprite of get(packet.SpriteTag)) {
+                    if (Sprite.pos) Sprite.jump(packet.Force);
+                }
+            }
+            break;
+        }
+
+        case "PosSprite": {
+            if (packet.SpriteTag !== localStorage.getItem("ClientId")) {
+                for (const Sprite of get(packet.SpriteTag)) {
+                    if (Sprite.pos) {
+                        Sprite.pos = vec2(packet.X, packet.Y);
+                    }
+                }
+            }
+            break;
+        }
+
+        default:
+            console.warn("Unhandled packet:", packet.Name, packet);
     }
-}
+};
 
-ClientService.Dash = function (Character, Type) {
-    if (Character == undefined || Character["Cooldowns"] == undefined) {
-        return;
+// Dash helper
+ClientService.Dash = function (character, type) {
+    if (!character) return;
+
+    switch (type) {
+        case "Forwards":
+            character.move(300, 0);
+            break;
+        case "Backwards":
+            character.move(-300, 0);
+            break;
+        case "Upwards":
+            character.jump(500);
+            break;
     }
-
-    if (Character.state == "Dashing" || Character.Dashing == true || Character.state == "Stunned" || Character.State == "TrueStunned" || Character.Cooldowns.DashCooldown > 0) {
-        return;
-    };
-
-    if (Type === "Upwards" && !Character.isGrounded() && !Character.CanUpDash) {
-        return;
-    };
-
-    if (Type === "Upwards" && !Character.isGrounded()) {
-        Character.CanUpDash = false;
-    };
-
-    Character.state = "Dashing";
-    Character.Dashing = true;
-    Character.DashTimer = PhysicsService.Shared.DASH_TIME;
-    Character.Cooldowns.DashCooldown = PhysicsService.Shared.DASH_COOLDOWN;
-
-    if (Type === "Forwards") {
-        Character.vel.y = 0;
-        Character.vel.x = PhysicsService.Shared.DASH_SPEED;
-    } else if (Type === "Backwards") {
-        Character.vel.y = 0;
-        Character.vel.x = PhysicsService.Shared.BACKDASH_SPEED;
-    } else if (Type === "Upwards") {
-        Character.vel.x = 0;
-        Character.vel.y = PhysicsService.Shared.UPDASH_FORCE;
-    };
-
-    EffectService.SpawnAfterImage(Character);
-
-    wait(0.05, () => EffectService.SpawnAfterImage(Character));
-    wait(0.1, () => EffectService.SpawnAfterImage(Character));
-
-    EffectService.SpawnDust(Character.pos.add(vec2(0, Character.height / 2)), {
-        Count: 16,
-        SpeedRange: [80, 200],
-        AngleRange: Type === "Upwards" ? [80, 100] : [160, 200],
-        SizeRange: [3, 6],
-        LifeRange: [0.15, 0.4],
-    });
 };
 
 export { ClientService };
