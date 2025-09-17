@@ -53,16 +53,91 @@ Socket.on("ClientPacket", (Packet) => {
   }
 
   console.log(Packet);
+  if (Packet.Name == "RefreshClientSprites") {
+    const ClientSprites = get("Client")
 
-  if (Packet.Name == "Dusty") {
-    const Player = get("Player");
-    console.log(Player);
-    EffectService.SpawnAfterImage(Player[0]);
+    for (const Sprite of ClientSprites) {
+      destroy(Sprite);
+    }
+
+    for (const ClientInstance of Packet.Clients) {
+      if (ClientInstance.toString() !== ClientId.toString()) {
+        const Character = add([
+          sprite("bean"),
+          area(),
+          anchor("center"),
+          pos(120, 80),
+          body(),
+          color(rgb(255, 255, 255)),
+          rotate(0),
+          state("Idle", [
+            "Idle",
+            "Dashing",
+            "Stunned",
+            "TrueStunned",
+            "Moving"
+          ]),
+          {
+            CanUpDash: true,
+            Dashing: false,
+            DashTimer: 0,
+            Facing: 1,
+            Cooldowns: {
+              DashCooldown: 0
+            }
+          },
+
+          ClientInstance.toString(),
+          "Client"
+        ]);
+      }
+    }
+
+  } else if (Packet.Name == "CreatePlayerSprite") {
+    const Character = add([
+      sprite("bean"),
+      area(),
+      anchor("center"),
+      pos(120, 80),
+      body(),
+      color(rgb(255, 255, 255)),
+      rotate(0),
+      state("Idle", [
+        "Idle",
+        "Dashing",
+        "Stunned",
+        "TrueStunned",
+        "Moving"
+      ]),
+      {
+        CanUpDash: true,
+        Dashing: false,
+        DashTimer: 0,
+        Facing: 1,
+        Cooldowns: {
+          DashCooldown: 0
+        }
+      },
+
+      Packet.SpriteTag,
+      "Client"
+    ]);
+  } else if (Packet.Name == "DashSprite") {
+    const Sprite = get(Packet.SpriteTag);
+    ClientService.Dash(Sprite[0], Packet.Type);
+  } else if (Packet.Name == "MoveSprite") {
+    const Sprite = get(Packet.SpriteTag)
+
+    if (!Sprite.state == undefined && Sprite.state == "Dashing") {
+      return;
+    }
+
+    Sprite.pos = vec2(Packet.X, Packet.Y);
   }
 })
 
 setInterval(() => {
   if (Socket && Socket.connected) {
-    Socket.emit("ServerPacket", { Name: "PlayerInput" });
+    //Socket.emit("ServerPacket", { Name: "PlayerInput" });
   }
 }, Math.round(1000 / 60));

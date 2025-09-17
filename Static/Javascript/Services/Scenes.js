@@ -34,7 +34,7 @@ SceneService.LoadScenes = function () {
                     DashCooldown: 0
                 }
             },
-            "Player",
+            "LocalClient",
         ]);
 
         add([
@@ -158,19 +158,21 @@ SceneService.LoadScenes = function () {
             }
         });
 
-
-
         onKeyPress("w", () => {
             if (Character.isGrounded() && !Character.Dashing && Character.state !== "Dashing") {
                 Character.jump(PhysicsService.Shared.JUMP_FORCE);
             }
         });
 
-        onKeyPress("g", () => {
+        onDraw(() => {
             if (Socket && Socket.connected) {
-                Socket.emit("ServerPacket", { Name: "Wruff" });
+                Socket.emit("ServerPacket", { Name: "MoveSprite", SpriteTag: localStorage.getItem("ClientId").toString() });
             }
         });
+
+        if (Socket && Socket.connected) {
+            Socket.emit("ServerPacket", { Name: "FetchClients", Type: "CreateSprites" });
+        }
     });
 };
 

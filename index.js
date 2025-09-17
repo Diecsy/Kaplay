@@ -46,22 +46,38 @@ IO.on("connection", (socket) => {
   ServerState.ActiveClients.add(ClientId);
   console.log(`Client ${ClientId} connected (socket ${socket.id})`);
 
+  // Refresh all of the client's to add a new sprite, etc
+
+  IO.emit("ClientPacket", { Name: "RefreshClientSprites", Clients: ServerState.ActiveClients });
+  
   socket.on("ServerPacket", (Packet) => {
     if (!Packet || typeof Packet.Name !== "string" || Packet == undefined || Packet["Name"] == undefined) {
       return;
     };
 
+    // Packet info yeah
 
-    // handle packet here for later :3
+    if (Packet.Name == "FetchClients") {
+      // Fetchs all clients and creates a sprite accordinglly as long as they aren't the local client
 
-    if (Packet.Name == "Wruff") {
-      socket.emit("ClientPacket", { Name: "Dusty" });
+      for (const Client of ServerState.ActiveClients) {
+        if (Client !== ClientId) {
+          IO.emit("ClientPacket", { Name: "CreatePlayerSprite", SpriteTag: Client });
+        }
+      }
+    } else if (Packet.Name == "MoveSprite") {
+      // Moves a specific sprite between the whole server
+
+      if (Packet.Type !== undefined) {
+        IO.emit("ClientPacket", { Name: "MoveSprite", SpriteTag: Packet.SpriteTag });
+      }
     }
   });
 
   socket.on("disconnect", (Reason) => {
     ServerState.ActiveClients.delete(ClientId);
     console.log(`Client ${ClientId} disconnected (socket ${socket.id}). Reason: ${Reason}`);
+    IO.emit("ClientPacket", { Name: "RefreshClientSprites" });
   });
 
   socket.on("error", (Error) => {

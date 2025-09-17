@@ -32,6 +32,10 @@ ClientService.InitateClient = function () {
     return ClientInfo;
 }
 
+ClientService.GetAllClients = function() {
+    return Clients;
+}
+
 ClientService.GetClient = function(ClientId) {
     if (!ClientId) {
         return;
