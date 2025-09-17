@@ -60,8 +60,8 @@ Socket.on("ClientPacket", (Packet) => {
       destroy(Sprite);
     }
 
-    for (const ClientInstance of Packet.Clients) {
-      if (ClientInstance.toString() !== ClientId.toString()) {
+    for (const ClientInstance of ClientService.GetAllClients()) {
+      if (ClientInstance.ClientId.toString() !== ClientId.toString()) {
         const Character = add([
           sprite("bean"),
           area(),
