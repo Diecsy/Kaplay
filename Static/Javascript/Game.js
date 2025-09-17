@@ -32,35 +32,30 @@ Socket.on("connect_error", (err) => {
   console.error("Socket connect_error:", err);
 });
 
-Socket.on("ConnectionError", (errorMessage) => {
-  console.warn("ConnectionError:", errorMessage);
-  if (errorMessage === "SingleTab") {
-    alert("You may only have one tab open at once.");
-    window.close();
-  } else {
-    document.body.innerHTML = `<h2>Connection error: ${String(errorMessage)}</h2>`;
-  }
-});
-
-Socket.on("disconnect", (reason) => {
-  console.log("Socket disconnected:", reason);
-});
-
-// 🔹 Unified packet system
 Socket.on("Packet", (packet) => {
   if (!packet) return;
-
   console.log("Received packet:", packet);
 
   switch (packet.Name) {
+    case "ConnectionError": {
+      console.warn("ConnectionError:", packet.Error);
+      if (packet.Error === "SingleTab") {
+        alert("You may only have one tab open at once.");
+        window.close();
+      } else {
+        document.body.innerHTML = `<h2>Connection error: ${String(packet.Error)}</h2>`;
+      }
+      break;
+    }
+
     case "RefreshClientSprites": {
       const ClientSprites = get("Client");
       for (const Sprite of ClientSprites) {
         destroy(Sprite);
       }
 
-      for (const ClientInstance of ClientService.GetAllClients()) {
-        if (ClientInstance.ClientId.toString() !== ClientId.toString()) {
+      for (const OtherId of packet.Clients) {
+        if (OtherId.toString() !== ClientId.toString()) {
           add([
             sprite("bean"),
             area(),
@@ -83,7 +78,7 @@ Socket.on("Packet", (packet) => {
               Facing: 1,
               Cooldowns: { DashCooldown: 0 },
             },
-            ClientInstance.toString(),
+            OtherId,
             "Client",
           ]);
         }
@@ -162,7 +157,6 @@ Socket.on("Packet", (packet) => {
   }
 });
 
-// 🔹 Send packets in the new format
 setInterval(() => {
   if (Socket && Socket.connected) {
     Socket.emit("Packet", {

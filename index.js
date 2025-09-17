@@ -33,7 +33,7 @@ IO.on("connection", (socket) => {
 
   if (!ClientId) {
     console.log(`Connection rejected (missing ClientId) - socket: ${socket.id}`);
-    socket.emit("ConnectionError", "MissingClientId");
+    socket.emit("Packet", { Name: "ConnectionError", Error: "MissingClientId" });
     socket.disconnect(true);
     return;
   }
@@ -45,7 +45,7 @@ IO.on("connection", (socket) => {
     const prevSocket = IO.sockets.sockets.get(prevSocketId);
     if (prevSocket) {
       try {
-        prevSocket.emit("ConnectionError", "ReplacedByNewConnection");
+        prevSocket.emit("Packet", { Name: "ConnectionError", Error: "ReplacedByNewConnection" });
         prevSocket.disconnect(true);
       } catch (e) {
         console.warn("Could not disconnect previous socket:", e);
@@ -60,26 +60,24 @@ IO.on("connection", (socket) => {
 
   console.log(`Client ${ClientId} connected (socket ${socket.id})`);
 
-  // Tell everyone (including this socket) the current client list (array form)
+  // Tell everyone (including this socket) the current client list
   const clientsArray = Array.from(ServerState.ClientMap.keys());
-  IO.emit("ClientPacket", { Name: "RefreshClientSprites", Clients: clientsArray });
+  IO.emit("Packet", { Name: "RefreshClientSprites", Clients: clientsArray });
 
   // Handle incoming packets from clients
-  socket.on("ServerPacket", (Packet) => {
+  socket.on("Packet", (Packet) => {
     if (!Packet || typeof Packet.Name !== "string") return;
 
     switch (Packet.Name) {
       case "FetchClients": {
-        // Send back the full client list only to requester (no broadcasting required)
         const clients = Array.from(ServerState.ClientMap.keys());
-        socket.emit("ClientPacket", { Name: "FetchClientsResponse", Clients: clients });
+        socket.emit("Packet", { Name: "FetchClientsResponse", Clients: clients });
         break;
       }
 
-      // Movement commands -> broadcast to everyone else (not the origin)
       case "MoveSprite": {
         if (typeof Packet.SpriteTag === "string" && typeof Packet.Speed === "number") {
-          socket.broadcast.emit("ClientPacket", {
+          socket.broadcast.emit("Packet", {
             Name: "MoveSprite",
             SpriteTag: Packet.SpriteTag,
             Speed: Packet.Speed,
@@ -91,7 +89,7 @@ IO.on("connection", (socket) => {
 
       case "JumpSprite": {
         if (typeof Packet.SpriteTag === "string" && typeof Packet.Force === "number") {
-          socket.broadcast.emit("ClientPacket", {
+          socket.broadcast.emit("Packet", {
             Name: "JumpSprite",
             SpriteTag: Packet.SpriteTag,
             Force: Packet.Force,
@@ -103,7 +101,7 @@ IO.on("connection", (socket) => {
 
       case "DashSprite": {
         if (typeof Packet.SpriteTag === "string" && typeof Packet.Type === "string") {
-          socket.broadcast.emit("ClientPacket", {
+          socket.broadcast.emit("Packet", {
             Name: "DashSprite",
             SpriteTag: Packet.SpriteTag,
             Type: Packet.Type,
@@ -114,9 +112,8 @@ IO.on("connection", (socket) => {
       }
 
       case "PosSprite": {
-        // Position broadcasting can be very spammy — keep it if you need it, but broadcast only to others
         if (typeof Packet.SpriteTag === "string" && typeof Packet.X === "number" && typeof Packet.Y === "number") {
-          socket.broadcast.emit("ClientPacket", {
+          socket.broadcast.emit("Packet", {
             Name: "PosSprite",
             SpriteTag: Packet.SpriteTag,
             X: Packet.X,
@@ -128,25 +125,21 @@ IO.on("connection", (socket) => {
       }
 
       default:
-        // Unknown packet name
         break;
     }
   });
 
-  // Clean disconnect: only remove mapping if the mapping is still pointing to this socket
   socket.on("disconnect", (reason) => {
     const storedClientId = ServerState.SocketMap.get(socket.id);
     if (storedClientId) {
-      // Only delete if the map still points to this socket id (prevents removing replaced connection)
       if (ServerState.ClientMap.get(storedClientId) === socket.id) {
         ServerState.ClientMap.delete(storedClientId);
       }
       ServerState.SocketMap.delete(socket.id);
       console.log(`Client ${storedClientId} disconnected (socket ${socket.id}). Reason: ${reason}`);
-      // Tell everyone who left and send updated list
       const clientsArray2 = Array.from(ServerState.ClientMap.keys());
-      IO.emit("ClientPacket", { Name: "ClientLeft", ClientId: storedClientId });
-      IO.emit("ClientPacket", { Name: "RefreshClientSprites", Clients: clientsArray2 });
+      IO.emit("Packet", { Name: "ClientLeft", ClientId: storedClientId });
+      IO.emit("Packet", { Name: "RefreshClientSprites", Clients: clientsArray2 });
     } else {
       console.log(`Unknown socket disconnected: ${socket.id}. Reason: ${reason}`);
     }
