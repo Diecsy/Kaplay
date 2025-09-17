@@ -64,7 +64,7 @@ Socket.on("ClientPacket", (Packet) => {
       if (ClientInstance.ClientId.toString() !== ClientId.toString()) {
         const Character = add([
           sprite("bean"),
-          area(),
+          //area(),
           anchor("center"),
           pos(120, 80),
           body(),
@@ -96,7 +96,7 @@ Socket.on("ClientPacket", (Packet) => {
   } else if (Packet.Name == "CreatePlayerSprite") {
     const Character = add([
       sprite("bean"),
-      area(),
+      //area(),
       anchor("center"),
       pos(120, 80),
       body(),
