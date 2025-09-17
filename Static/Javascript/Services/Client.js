@@ -1,155 +1,119 @@
 import { PhysicsService } from "./Physics.js";
-import { EffectService } from "./Effects.js";
 
 const ClientService = {
-    Clients: {},
+    Clients: new Map(),
 };
 
 ClientService.InitiateClient = function () {
-    const id = localStorage.getItem("ClientId");
-    if (!id) throw new Error("No ClientId found!");
+    const socket = io();
 
-    if (!this.Clients[id]) {
-        const socket = io();
+    const client = {
+        Id: localStorage.getItem("ClientId"),
+        Socket: socket,
+    };
 
-        this.Clients[id] = {
-            Id: id,
-            Socket: socket,
-        };
-
-        socket.on("Packet", (packet) => {
-            this.HandlePacket(packet);
-        });
-    }
-
-    return this.Clients[id];
+    this.Clients.set(client.Id, client);
+    return client;
 };
 
-// Unified packet sender
-ClientService.SendPacket = function (name, data = {}) {
-    const id = localStorage.getItem("ClientId");
-    const client = this.Clients[id];
-    if (client && client.Socket && client.Socket.connected) {
+ClientService.GetClient = function (id) {
+    return this.Clients.get(id);
+};
+
+ClientService.SendPacket = function (name, data) {
+    const client = this.GetClient(localStorage.getItem("ClientId"));
+    if (client && client.Socket) {
         client.Socket.emit("Packet", {
             Name: name,
-            SpriteTag: id,
-            ...data,
+            Data: data,
         });
     }
 };
 
-// Handle packets from server
 ClientService.HandlePacket = function (packet) {
-    if (!packet || !packet.Name) return;
+    const { Name, Data } = packet;
+    const id = Data?.SpriteTag;
 
-    switch (packet.Name) {
-        case "RefreshClientSprites": {
-            const ClientSprites = get("Client");
-            for (const Sprite of ClientSprites) destroy(Sprite);
-
-            for (const OtherId of packet.Clients || []) {
-                add([
-                    sprite("bean"),
-                    area(),
-                    anchor("center"),
-                    pos(120, 80),
-                    body(),
-                    color(rgb(255, 255, 255)),
-                    rotate(0),
-                    state("Idle", ["Idle", "Dashing", "Stunned", "TrueStunned", "Moving"]),
-                    {
-                        CanUpDash: true,
-                        Dashing: false,
-                        DashTimer: 0,
-                        Facing: 1,
-                        Cooldowns: { DashCooldown: 0 },
-                    },
-                    OtherId,
-                    "Client",
-                ]);
-            }
-            break;
-        }
-
-        case "CreatePlayerSprite": {
-            add([
-                sprite("bean"),
-                area(),
-                anchor("center"),
-                pos(120, 80),
-                body(),
-                color(rgb(255, 255, 255)),
-                rotate(0),
-                state("Idle", ["Idle", "Dashing", "Stunned", "TrueStunned", "Moving"]),
-                {
-                    CanUpDash: true,
-                    Dashing: false,
-                    DashTimer: 0,
-                    Facing: 1,
-                    Cooldowns: { DashCooldown: 0 },
-                },
-                packet.SpriteTag,
-                "Client",
-            ]);
-            break;
-        }
-
-        case "DashSprite": {
-            if (packet.SpriteTag !== localStorage.getItem("ClientId")) {
-                for (const Sprite of get(packet.SpriteTag)) {
-                    this.Dash(Sprite, packet.Type);
-                }
-            }
-            break;
-        }
-
+    switch (Name) {
         case "MoveSprite": {
-            if (packet.SpriteTag !== localStorage.getItem("ClientId")) {
-                for (const Sprite of get(packet.SpriteTag)) {
-                    Sprite.move(packet.Speed, 0);
-                }
+            let sprite = get(id)[0];
+            if (!sprite) {
+                sprite = this.SpawnRemoteSprite(id);
             }
+            sprite.move(Data.Speed, 0);
             break;
         }
 
         case "JumpSprite": {
-            if (packet.SpriteTag !== localStorage.getItem("ClientId")) {
-                for (const Sprite of get(packet.SpriteTag)) {
-                    if (Sprite.pos) Sprite.jump(packet.Force);
-                }
+            let sprite = get(id)[0];
+            if (!sprite) {
+                sprite = this.SpawnRemoteSprite(id);
             }
+            sprite.jump(Data.Force);
+            break;
+        }
+
+        case "DashSprite": {
+            let sprite = get(id)[0];
+            if (!sprite) {
+                sprite = this.SpawnRemoteSprite(id);
+            }
+            this.Dash(sprite, Data.Type);
             break;
         }
 
         case "PosSprite": {
-            if (packet.SpriteTag !== localStorage.getItem("ClientId")) {
-                for (const Sprite of get(packet.SpriteTag)) {
-                    if (Sprite.pos) {
-                        Sprite.pos = vec2(packet.X, packet.Y);
-                    }
-                }
+            let sprite = get(id)[0];
+            if (!sprite) {
+                sprite = this.SpawnRemoteSprite(id);
             }
+            sprite.pos = vec2(Data.X, Data.Y);
             break;
         }
 
-        default:
-            console.warn("Unhandled packet:", packet.Name, packet);
+        case "FetchClients": {
+            // Server sends back all known clients
+            Data.Clients.forEach((clientId) => {
+                if (!get(clientId)[0]) {
+                    this.SpawnRemoteSprite(clientId);
+                }
+            });
+            break;
+        }
     }
 };
 
-// Dash helper
+ClientService.SpawnRemoteSprite = function (id) {
+    const sprite = add([
+        sprite("bean"),
+        area(),
+        anchor("center"),
+        pos(rand(100, 500), rand(100, 300)),
+        body(),
+        color(rgb(200, 200, 200)),
+        { Remote: true },
+        id,
+    ]);
+    return sprite;
+};
+
 ClientService.Dash = function (character, type) {
-    if (!character) return;
+    character.state = "Dashing";
+    character.Dashing = true;
+    character.DashTimer = 0.2;
 
     switch (type) {
         case "Forwards":
-            character.move(300, 0);
+            character.vel.x = PhysicsService.Shared.DASH_SPEED * character.Facing;
             break;
         case "Backwards":
-            character.move(-300, 0);
+            character.vel.x = -PhysicsService.Shared.DASH_SPEED * character.Facing;
             break;
         case "Upwards":
-            character.jump(500);
+            if (character.CanUpDash) {
+                character.vel.y = -PhysicsService.Shared.DASH_SPEED;
+                character.CanUpDash = false;
+            }
             break;
     }
 };
