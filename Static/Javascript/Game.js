@@ -130,9 +130,7 @@ Socket.on("ClientPacket", (Packet) => {
 
     if (Packet.SpriteTag !== ClientId) {
       for (const Sprite of Sprites) {
-        if (Sprite.pos !== undefined) {
-          Sprite.pos = vec2(Packet.X, Sprite.pos.y);
-        }
+        Sprite.move(Packet.Speed, 0);
       }
     }
   } else if (Packet.Name == "JumpSprite") {

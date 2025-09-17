@@ -146,6 +146,9 @@ SceneService.LoadScenes = function () {
 
         onKeyDown("a", () => {
             if (!Character.Dashing && Character.state !== "Dashing") {
+                if (Socket && Socket.connected) {
+                    Socket.emit("ServerPacket", { Name: "MoveSprite", SpriteTag: localStorage.getItem("ClientId").toString(), Speed: -PhysicsService.Shared.PLAYER_SPEED});
+                }
                 Character.move(-PhysicsService.Shared.PLAYER_SPEED, 0);
                 Character.Facing = -1;
             }
@@ -153,6 +156,9 @@ SceneService.LoadScenes = function () {
 
         onKeyDown("d", () => {
             if (!Character.Dashing && Character.state !== "Dashing") {
+                if (Socket && Socket.connected) {
+                    Socket.emit("ServerPacket", { Name: "MoveSprite", SpriteTag: localStorage.getItem("ClientId").toString(), Speed: PhysicsService.Shared.PLAYER_SPEED});
+                }
                 Character.move(PhysicsService.Shared.PLAYER_SPEED, 0);
                 Character.Facing = 1;
             }
@@ -166,12 +172,6 @@ SceneService.LoadScenes = function () {
                 }
             }
         });
-
-        setInterval(() => {
-            if (Socket && Socket.connected) {
-                Socket.emit("ServerPacket", { Name: "MoveSprite", SpriteTag: localStorage.getItem("ClientId").toString(), X: Character.pos.x});
-            }
-        }, 1000 / 60);
 
         if (Socket && Socket.connected) {
             Socket.emit("ServerPacket", { Name: "FetchClients", Type: "CreateSprites" });
