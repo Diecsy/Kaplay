@@ -127,6 +127,10 @@ Socket.on("ClientPacket", (Packet) => {
     ClientService.Dash(Sprite[0], Packet.Type);
   } else if (Packet.Name == "MoveSprite") {
     const Sprites = get(Packet.SpriteTag);
+
+    if (Packet.SpriteTag == ClientId) {
+      return;
+    }
     
     for (const Sprite of Sprites) {
       if (Sprite.pos !== undefined) {
