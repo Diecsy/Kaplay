@@ -18,8 +18,10 @@ const StaticPath = Path.join(__dirname, "Static");
 Application.use(Express.static(StaticPath));
 
 const ServerState = {
-  ActiveClients: new Set(),
-  ActiveMatches: new Set(),
+  // Map ClientId -> socket.id
+  ClientMap: new Map(),
+  // Map socket.id -> ClientId
+  SocketMap: new Map(),
   Port: process.env.PORT || 3000,
 };
 
@@ -36,54 +38,122 @@ IO.on("connection", (socket) => {
     return;
   }
 
-  if (ServerState.ActiveClients.has(ClientId)) {
-    console.log(`Duplicate ClientId ${ClientId} attempted connection; rejecting.`);
-    socket.emit("ConnectionError", "SingleTab");
-    socket.disconnect(true);
-    return;
+  // If this clientId is already connected, disconnect the previous socket and replace it
+  const prevSocketId = ServerState.ClientMap.get(ClientId);
+  if (prevSocketId && prevSocketId !== socket.id) {
+    console.log(`Replacing previous connection for ClientId ${ClientId} (old socket ${prevSocketId})`);
+    const prevSocket = IO.sockets.sockets.get(prevSocketId);
+    if (prevSocket) {
+      try {
+        prevSocket.emit("ConnectionError", "ReplacedByNewConnection");
+        prevSocket.disconnect(true);
+      } catch (e) {
+        console.warn("Could not disconnect previous socket:", e);
+      }
+    }
   }
 
-  ServerState.ActiveClients.add(ClientId);
+  // Save mapping
+  ServerState.ClientMap.set(ClientId, socket.id);
+  ServerState.SocketMap.set(socket.id, ClientId);
+  socket.data.clientId = ClientId; // convenient on the socket
+
   console.log(`Client ${ClientId} connected (socket ${socket.id})`);
 
-  // Refresh all of the client's to add a new sprite, etc
+  // Tell everyone (including this socket) the current client list (array form)
+  const clientsArray = Array.from(ServerState.ClientMap.keys());
+  IO.emit("ClientPacket", { Name: "RefreshClientSprites", Clients: clientsArray });
 
-  IO.emit("ClientPacket", { Name: "RefreshClientSprites", Clients: ServerState.ActiveClients });
-  
+  // Handle incoming packets from clients
   socket.on("ServerPacket", (Packet) => {
-    if (!Packet || typeof Packet.Name !== "string" || Packet == undefined || Packet["Name"] == undefined) {
-      return;
-    };
+    if (!Packet || typeof Packet.Name !== "string") return;
 
-    // Packet info yeah
-
-    if (Packet.Name == "FetchClients") {
-      // Fetchs all clients and creates a sprite accordinglly as long as they aren't the local client
-
-      for (const Client of ServerState.ActiveClients) {
-        if (Client !== ClientId) {
-          IO.emit("ClientPacket", { Name: "CreatePlayerSprite", SpriteTag: Client });
-        }
+    switch (Packet.Name) {
+      case "FetchClients": {
+        // Send back the full client list only to requester (no broadcasting required)
+        const clients = Array.from(ServerState.ClientMap.keys());
+        socket.emit("ClientPacket", { Name: "FetchClientsResponse", Clients: clients });
+        break;
       }
-    } else if (Packet.Name == "MoveSprite") {
-      IO.emit("ClientPacket", { Name: "MoveSprite", SpriteTag: Packet.SpriteTag, Speed: Packet.Speed});
-    } else if (Packet.Name == "JumpSprite") {
-      IO.emit("ClientPacket", { Name: "JumpSprite", SpriteTag: Packet.SpriteTag, Force: Packet.Force});
-    } else if (Packet.Name == "DashSprite") {
-      IO.emit("ClientPacket", { Name: "DashSprite", SpriteTag: Packet.SpriteTag, Type: Packet.Type});
-    } else if (Packet.Name == "PosSprite") {
-      IO.emit("ClientPacket", { Name: "PosSprite", SpriteTag: Packet.SpriteTag, X: Packet.X, Y: Packet.Y});
+
+      // Movement commands -> broadcast to everyone else (not the origin)
+      case "MoveSprite": {
+        if (typeof Packet.SpriteTag === "string" && typeof Packet.Speed === "number") {
+          socket.broadcast.emit("ClientPacket", {
+            Name: "MoveSprite",
+            SpriteTag: Packet.SpriteTag,
+            Speed: Packet.Speed,
+            T: Date.now(),
+          });
+        }
+        break;
+      }
+
+      case "JumpSprite": {
+        if (typeof Packet.SpriteTag === "string" && typeof Packet.Force === "number") {
+          socket.broadcast.emit("ClientPacket", {
+            Name: "JumpSprite",
+            SpriteTag: Packet.SpriteTag,
+            Force: Packet.Force,
+            T: Date.now(),
+          });
+        }
+        break;
+      }
+
+      case "DashSprite": {
+        if (typeof Packet.SpriteTag === "string" && typeof Packet.Type === "string") {
+          socket.broadcast.emit("ClientPacket", {
+            Name: "DashSprite",
+            SpriteTag: Packet.SpriteTag,
+            Type: Packet.Type,
+            T: Date.now(),
+          });
+        }
+        break;
+      }
+
+      case "PosSprite": {
+        // Position broadcasting can be very spammy — keep it if you need it, but broadcast only to others
+        if (typeof Packet.SpriteTag === "string" && typeof Packet.X === "number" && typeof Packet.Y === "number") {
+          socket.broadcast.emit("ClientPacket", {
+            Name: "PosSprite",
+            SpriteTag: Packet.SpriteTag,
+            X: Packet.X,
+            Y: Packet.Y,
+            T: Date.now(),
+          });
+        }
+        break;
+      }
+
+      default:
+        // Unknown packet name
+        break;
     }
   });
 
-  socket.on("disconnect", (Reason) => {
-    ServerState.ActiveClients.delete(ClientId);
-    console.log(`Client ${ClientId} disconnected (socket ${socket.id}). Reason: ${Reason}`);
-    IO.emit("ClientPacket", { Name: "RefreshClientSprites" });
+  // Clean disconnect: only remove mapping if the mapping is still pointing to this socket
+  socket.on("disconnect", (reason) => {
+    const storedClientId = ServerState.SocketMap.get(socket.id);
+    if (storedClientId) {
+      // Only delete if the map still points to this socket id (prevents removing replaced connection)
+      if (ServerState.ClientMap.get(storedClientId) === socket.id) {
+        ServerState.ClientMap.delete(storedClientId);
+      }
+      ServerState.SocketMap.delete(socket.id);
+      console.log(`Client ${storedClientId} disconnected (socket ${socket.id}). Reason: ${reason}`);
+      // Tell everyone who left and send updated list
+      const clientsArray2 = Array.from(ServerState.ClientMap.keys());
+      IO.emit("ClientPacket", { Name: "ClientLeft", ClientId: storedClientId });
+      IO.emit("ClientPacket", { Name: "RefreshClientSprites", Clients: clientsArray2 });
+    } else {
+      console.log(`Unknown socket disconnected: ${socket.id}. Reason: ${reason}`);
+    }
   });
 
-  socket.on("error", (Error) => {
-    console.error("Socket error:", Error);
+  socket.on("error", (err) => {
+    console.error("Socket error:", err);
   });
 });
 

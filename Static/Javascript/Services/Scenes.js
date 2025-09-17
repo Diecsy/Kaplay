@@ -111,7 +111,7 @@ SceneService.LoadScenes = function () {
         const DashCombinations = {
             "DD": () => {
                 if (Socket && Socket.connected) {
-                    Socket.emit("ServerPacket", {
+                    Socket.emit("Packet", {
                         Name: "DashSprite",
                         SpriteTag: localStorage.getItem("ClientId").toString(),
                         Type: "Forwards"
@@ -123,7 +123,7 @@ SceneService.LoadScenes = function () {
 
             "AA": () => {
                 if (Socket && Socket.connected) {
-                    Socket.emit("ServerPacket", {
+                    Socket.emit("Packet", {
                         Name: "DashSprite",
                         SpriteTag: localStorage.getItem("ClientId").toString(),
                         Type: "Backwards"
@@ -135,7 +135,7 @@ SceneService.LoadScenes = function () {
 
             "WW": () => {
                 if (Socket && Socket.connected) {
-                    Socket.emit("ServerPacket", {
+                    Socket.emit("Packet", {
                         Name: "DashSprite",
                         SpriteTag: localStorage.getItem("ClientId").toString(),
                         Type: "Upwards"
@@ -145,7 +145,6 @@ SceneService.LoadScenes = function () {
                 ClientService.Dash(Character, "Upwards");
             },
         };
-
 
         onKeyPress((Key) => {
             InputBuffer.push({ KeyCode: Key.toUpperCase(), Time: time() });
@@ -180,7 +179,11 @@ SceneService.LoadScenes = function () {
         onKeyDown("a", () => {
             if (!Character.Dashing && Character.state !== "Dashing") {
                 if (Socket && Socket.connected) {
-                    Socket.emit("ServerPacket", { Name: "MoveSprite", SpriteTag: localStorage.getItem("ClientId").toString(), Speed: -PhysicsService.Shared.PLAYER_SPEED });
+                    Socket.emit("Packet", {
+                        Name: "MoveSprite",
+                        SpriteTag: localStorage.getItem("ClientId").toString(),
+                        Speed: -PhysicsService.Shared.PLAYER_SPEED
+                    });
                 }
                 Character.move(-PhysicsService.Shared.PLAYER_SPEED, 0);
                 Character.Facing = -1;
@@ -190,7 +193,11 @@ SceneService.LoadScenes = function () {
         onKeyDown("d", () => {
             if (!Character.Dashing && Character.state !== "Dashing") {
                 if (Socket && Socket.connected) {
-                    Socket.emit("ServerPacket", { Name: "MoveSprite", SpriteTag: localStorage.getItem("ClientId").toString(), Speed: PhysicsService.Shared.PLAYER_SPEED });
+                    Socket.emit("Packet", {
+                        Name: "MoveSprite",
+                        SpriteTag: localStorage.getItem("ClientId").toString(),
+                        Speed: PhysicsService.Shared.PLAYER_SPEED
+                    });
                 }
                 Character.move(PhysicsService.Shared.PLAYER_SPEED, 0);
                 Character.Facing = 1;
@@ -201,7 +208,11 @@ SceneService.LoadScenes = function () {
             if (Character.isGrounded() && !Character.Dashing && Character.state !== "Dashing") {
                 Character.jump(PhysicsService.Shared.JUMP_FORCE);
                 if (Socket && Socket.connected) {
-                    Socket.emit("ServerPacket", { Name: "JumpSprite", SpriteTag: localStorage.getItem("ClientId").toString(), Force: PhysicsService.Shared.JUMP_FORCE });
+                    Socket.emit("Packet", {
+                        Name: "JumpSprite",
+                        SpriteTag: localStorage.getItem("ClientId").toString(),
+                        Force: PhysicsService.Shared.JUMP_FORCE
+                    });
                 }
             }
         });
@@ -209,13 +220,21 @@ SceneService.LoadScenes = function () {
         Character.onUpdate(() => {
             if (Character.vel.x === 0 && Character.vel.y === 0) {
                 if (Socket && Socket.connected) {
-                    Socket.emit("ServerPacket", { Name: "PosSprite", SpriteTag: localStorage.getItem("ClientId").toString(), X: Character.pos.x, Y: Character.pos.y });
+                    Socket.emit("Packet", {
+                        Name: "PosSprite",
+                        SpriteTag: localStorage.getItem("ClientId").toString(),
+                        X: Character.pos.x,
+                        Y: Character.pos.y
+                    });
                 }
             }
         });
 
         if (Socket && Socket.connected) {
-            Socket.emit("ServerPacket", { Name: "FetchClients", Type: "CreateSprites" });
+            Socket.emit("Packet", {
+                Name: "FetchClients",
+                Type: "CreateSprites"
+            });
         }
     });
 };

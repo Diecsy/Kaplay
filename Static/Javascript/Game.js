@@ -15,7 +15,6 @@ if (!ClientId) {
 }
 
 const Client = ClientService.InitateClient();
-console.log(Client);
 const Socket = Client.Socket;
 
 DebugService.ErudaConsole();
@@ -36,7 +35,7 @@ Socket.on("connect_error", (err) => {
 Socket.on("ConnectionError", (errorMessage) => {
   console.warn("ConnectionError:", errorMessage);
   if (errorMessage === "SingleTab") {
-    alert("You may only have one tab open at once.")
+    alert("You may only have one tab open at once.");
     window.close();
   } else {
     document.body.innerHTML = `<h2>Connection error: ${String(errorMessage)}</h2>`;
@@ -47,122 +46,129 @@ Socket.on("disconnect", (reason) => {
   console.log("Socket disconnected:", reason);
 });
 
-Socket.on("ClientPacket", (Packet) => {
-  if (Packet == undefined) {
-    return;
+// 🔹 Unified packet system
+Socket.on("Packet", (packet) => {
+  if (!packet) return;
+
+  console.log("Received packet:", packet);
+
+  switch (packet.Name) {
+    case "RefreshClientSprites": {
+      const ClientSprites = get("Client");
+      for (const Sprite of ClientSprites) {
+        destroy(Sprite);
+      }
+
+      for (const ClientInstance of ClientService.GetAllClients()) {
+        if (ClientInstance.ClientId.toString() !== ClientId.toString()) {
+          add([
+            sprite("bean"),
+            area(),
+            anchor("center"),
+            pos(120, 80),
+            body(),
+            color(rgb(255, 255, 255)),
+            rotate(0),
+            state("Idle", [
+              "Idle",
+              "Dashing",
+              "Stunned",
+              "TrueStunned",
+              "Moving",
+            ]),
+            {
+              CanUpDash: true,
+              Dashing: false,
+              DashTimer: 0,
+              Facing: 1,
+              Cooldowns: { DashCooldown: 0 },
+            },
+            ClientInstance.toString(),
+            "Client",
+          ]);
+        }
+      }
+      break;
+    }
+
+    case "CreatePlayerSprite": {
+      add([
+        sprite("bean"),
+        area(),
+        anchor("center"),
+        pos(120, 80),
+        body(),
+        color(rgb(255, 255, 255)),
+        rotate(0),
+        state("Idle", [
+          "Idle",
+          "Dashing",
+          "Stunned",
+          "TrueStunned",
+          "Moving",
+        ]),
+        {
+          CanUpDash: true,
+          Dashing: false,
+          DashTimer: 0,
+          Facing: 1,
+          Cooldowns: { DashCooldown: 0 },
+        },
+        packet.SpriteTag,
+        "Client",
+      ]);
+      break;
+    }
+
+    case "DashSprite": {
+      if (packet.SpriteTag !== ClientId) {
+        for (const Sprite of get(packet.SpriteTag)) {
+          ClientService.Dash(Sprite, packet.Type);
+        }
+      }
+      break;
+    }
+
+    case "MoveSprite": {
+      if (packet.SpriteTag !== ClientId) {
+        for (const Sprite of get(packet.SpriteTag)) {
+          Sprite.move(packet.Speed, 0);
+        }
+      }
+      break;
+    }
+
+    case "JumpSprite": {
+      if (packet.SpriteTag !== ClientId) {
+        for (const Sprite of get(packet.SpriteTag)) {
+          if (Sprite.pos) {
+            Sprite.jump(packet.Force);
+          }
+        }
+      }
+      break;
+    }
+
+    case "PosSprite": {
+      if (packet.SpriteTag !== ClientId) {
+        for (const Sprite of get(packet.SpriteTag)) {
+          if (Sprite.pos) {
+            Sprite.pos = vec2(packet.X, packet.Y);
+          }
+        }
+      }
+      break;
+    }
   }
+});
 
-  console.log(Packet);
-  if (Packet.Name == "RefreshClientSprites") {
-    const ClientSprites = get("Client")
-
-    for (const Sprite of ClientSprites) {
-      destroy(Sprite);
-    }
-
-    for (const ClientInstance of ClientService.GetAllClients()) {
-      if (ClientInstance.ClientId.toString() !== ClientId.toString()) {
-        const Character = add([
-          sprite("bean"),
-          area(),
-          anchor("center"),
-          pos(120, 80),
-          body(),
-          color(rgb(255, 255, 255)),
-          rotate(0),
-          state("Idle", [
-            "Idle",
-            "Dashing",
-            "Stunned",
-            "TrueStunned",
-            "Moving"
-          ]),
-          {
-            CanUpDash: true,
-            Dashing: false,
-            DashTimer: 0,
-            Facing: 1,
-            Cooldowns: {
-              DashCooldown: 0
-            }
-          },
-
-          ClientInstance.toString(),
-          "Client"
-        ]);
-      }
-    }
-
-  } else if (Packet.Name == "CreatePlayerSprite") {
-    const Character = add([
-      sprite("bean"),
-      area(),
-      anchor("center"),
-      pos(120, 80),
-      body(),
-      color(rgb(255, 255, 255)),
-      rotate(0),
-      state("Idle", [
-        "Idle",
-        "Dashing",
-        "Stunned",
-        "TrueStunned",
-        "Moving"
-      ]),
-      {
-        CanUpDash: true,
-        Dashing: false,
-        DashTimer: 0,
-        Facing: 1,
-        Cooldowns: {
-          DashCooldown: 0
-        }
-      },
-
-      Packet.SpriteTag,
-      "Client"
-    ]);
-  } else if (Packet.Name == "DashSprite") {
-    const Sprites = get(Packet.SpriteTag);
-
-    if (Packet.SpriteTag !== ClientId) {
-      for (const Sprite of Sprites) {
-        ClientService.Dash(Sprite, Packet.Type);
-      }
-    }
-  } else if (Packet.Name == "MoveSprite") {
-    const Sprites = get(Packet.SpriteTag);
-
-    if (Packet.SpriteTag !== ClientId) {
-      for (const Sprite of Sprites) {
-        Sprite.move(Packet.Speed, 0);
-      }
-    }
-  } else if (Packet.Name == "JumpSprite") {
-    const Sprites = get(Packet.SpriteTag);
-
-    if (Packet.SpriteTag !== ClientId) {
-      for (const Sprite of Sprites) {
-        if (Sprite.pos !== undefined) {
-          Sprite.jump(Packet.Force);
-        }
-      }
-    }
-  } else if (Packet.Name == "PosSprite") {
-    const Sprites = get(Packet.SpriteTag);
-
-    if (Packet.SpriteTag !== ClientId) {
-      for (const Sprite of Sprites) {
-        if (Sprite.pos !== undefined) {
-          Sprite.pos = vec2(Packet.X, Packet.Y);
-        }
-      }
-    }
-  }
-})
-
+// 🔹 Send packets in the new format
 setInterval(() => {
   if (Socket && Socket.connected) {
-    //Socket.emit("ServerPacket", { Name: "PlayerInput" });
+    Socket.emit("Packet", {
+      Name: "Heartbeat",
+      ClientId: ClientId,
+      Time: Date.now(),
+    });
   }
 }, Math.round(1000 / 60));
