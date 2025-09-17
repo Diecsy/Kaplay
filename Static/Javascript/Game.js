@@ -15,6 +15,7 @@ if (!ClientId) {
 }
 
 const Client = ClientService.InitateClient();
+console.log(Client);
 const Socket = Client.Socket;
 
 DebugService.ErudaConsole();
