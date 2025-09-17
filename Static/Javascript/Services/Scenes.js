@@ -161,12 +161,15 @@ SceneService.LoadScenes = function () {
         onKeyPress("w", () => {
             if (Character.isGrounded() && !Character.Dashing && Character.state !== "Dashing") {
                 Character.jump(PhysicsService.Shared.JUMP_FORCE);
+                if (Socket && Socket.connected) {
+                    Socket.emit("ServerPacket", { Name: "JumpSprite", SpriteTag: localStorage.getItem("ClientId").toString(), Force: PhysicsService.Shared.JUMP_FORCE});
+                }
             }
         });
 
         setInterval(() => {
             if (Socket && Socket.connected) {
-                Socket.emit("ServerPacket", { Name: "MoveSprite", SpriteTag: localStorage.getItem("ClientId").toString(), X: Character.pos.x, Y: Character.pos.y });
+                Socket.emit("ServerPacket", { Name: "MoveSprite", SpriteTag: localStorage.getItem("ClientId").toString(), X: Character.pos.x});
             }
         }, 1000 / 60);
 

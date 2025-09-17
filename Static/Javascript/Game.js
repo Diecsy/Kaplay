@@ -130,10 +130,20 @@ Socket.on("ClientPacket", (Packet) => {
 
     if (Packet.SpriteTag !== ClientId) {
       for (const Sprite of Sprites) {
-      if (Sprite.pos !== undefined) {
-        Sprite.pos = vec2(Packet.X, Packet.Y);
+        if (Sprite.pos !== undefined) {
+          Sprite.pos = vec2(Packet.X, Sprite.pos.y);
+        }
       }
     }
+  } else if (Packet.Name == "JumpSprite") {
+    const Sprites = get(Packet.SpriteTag);
+
+    if (Packet.SpriteTag !== ClientId) {
+      for (const Sprite of Sprites) {
+        if (Sprite.pos !== undefined) {
+          Sprite.jump(Packet.Force);
+        }
+      }
     }
   }
 })
