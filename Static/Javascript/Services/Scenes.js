@@ -7,6 +7,9 @@ SceneService.LoadScenes = function () {
     scene("Testing", () => {
         setGravity(1600);
 
+        const Client = ClientService.GetClient(localStorage.getItem("ClientId"));
+        const Socket = Client.Socket;
+
         const Character = add([
             sprite("bean"),
             area(),
@@ -160,6 +163,12 @@ SceneService.LoadScenes = function () {
         onKeyPress("w", () => {
             if (Character.isGrounded() && !Character.Dashing && Character.state !== "Dashing") {
                 Character.jump(PhysicsService.Shared.JUMP_FORCE);
+            }
+        });
+
+        onKeyPress("g", () => {
+            if (Socket && Socket.connected) {
+                Socket.emit("ServerPacket", { Name: "Wruff" });
             }
         });
     });

@@ -14,15 +14,8 @@ if (!ClientId) {
   localStorage.setItem("ClientId", ClientId);
 }
 
-const Socket = io("https://kaplay.onrender.com", {
-  reconnectionDelayMax: 10000,
-  auth: {
-    Client: {
-      Name: "CustomReplicatedClient",
-      ClientId: ClientId
-    }
-  },
-});
+const Client = ClientService.InitateClient();
+const Socket = Client.Socket;
 
 DebugService.ErudaConsole();
 LoadService.LoadKaplay();
@@ -63,12 +56,6 @@ Socket.on("ClientPacket", (Packet) => {
     EffectService.SpawnAfterImage(Player);
   }
 })
-
-onKeyPress("g", () => {
-Socket.emit("ServerPacket", { Name: "Wruff" });
-});
-
-
 
 setInterval(() => {
   if (Socket && Socket.connected) {

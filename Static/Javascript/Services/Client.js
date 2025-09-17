@@ -2,6 +2,46 @@ import { PhysicsService } from "./Physics.js";
 import { EffectService } from "./Effects.js";
 const ClientService = {};
 
+const Clients = []
+
+ClientService.InitateClient = function () {
+    const ClientId = localStorage.get("ClientId");
+
+    if (!ClientId) {
+        return;
+    }
+
+    const ClientInfo = {
+        Socket: io("https://kaplay.onrender.com", {
+            reconnectionDelayMax: 10000,
+            auth: {
+                Client: {
+                    Name: "CustomReplicatedClient",
+                    ClientId: ClientId
+                }
+            }
+        }),
+
+        ClientId: ClientId,
+    };
+
+    Clients.push(ClientInfo);
+
+    return ClientInfo;
+}
+
+ClientService.GetClient = function(ClientId) {
+    if (!ClientId) {
+        return;
+    }
+
+    for (let Index = 0; Index < Clients.length; Index++) {
+        if (Clients[Index] !== undefined && Clients[Index]["ClientId"] == ClientId) {
+            return Clients[Index]
+        }
+    }
+}
+
 ClientService.Dash = function (Character, Type) {
     if (Character == undefined || Character["Cooldowns"] == undefined) {
         return;
