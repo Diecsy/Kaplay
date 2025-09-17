@@ -128,14 +128,12 @@ Socket.on("ClientPacket", (Packet) => {
   } else if (Packet.Name == "MoveSprite") {
     const Sprites = get(Packet.SpriteTag);
 
-    if (Packet.SpriteTag == ClientId) {
-      return;
-    }
-    
-    for (const Sprite of Sprites) {
+    if (Packet.SpriteTag !== ClientId) {
+      for (const Sprite of Sprites) {
       if (Sprite.pos !== undefined) {
         Sprite.pos = vec2(Packet.X, Packet.Y);
       }
+    }
     }
   }
 })
