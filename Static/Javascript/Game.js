@@ -7,8 +7,8 @@ import { LoadService } from "./Load.js";
 // Ensure clientId
 let ClientId = localStorage.getItem("ClientId");
 if (!ClientId) {
-    ClientId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    localStorage.setItem("ClientId", ClientId);
+  ClientId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  localStorage.setItem("ClientId", ClientId);
 }
 
 // Init client + socket
@@ -19,9 +19,12 @@ const Socket = Client.Socket;
 DebugService.ErudaConsole();
 LoadService.LoadKaplay();
 
+// 🔹 Load scenes BEFORE go("Testing")
+SceneService.LoadScenes();
+
 // Enter scene
 setTimeout(() => {
-    go("Testing");
+  go("Testing");
 }, 1500);
 
 // Connection events
@@ -31,13 +34,13 @@ Socket.on("disconnect", (reason) => console.log("Socket disconnected:", reason))
 
 // Handle packets
 Socket.on("Packet", (packet) => {
-    if (!packet) return;
-    ClientService.HandlePacket(packet);
+  if (!packet) return;
+  ClientService.HandlePacket(packet);
 });
 
 // Heartbeat
 setInterval(() => {
-    if (Socket && Socket.connected) {
-        ClientService.SendPacket("Heartbeat", { ClientId, Time: Date.now() });
-    }
+  if (Socket && Socket.connected) {
+    ClientService.SendPacket("Heartbeat", { ClientId, Time: Date.now() });
+  }
 }, Math.round(1000 / 60));
