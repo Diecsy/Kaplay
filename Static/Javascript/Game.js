@@ -64,9 +64,11 @@ Socket.on("ClientPacket", (Packet) => {
   }
 })
 
-if (onKeyPress("g")) {
-  Socket.emit("ServerPacket", { Name: "Wruff" });
-}
+onKeyPress("g", () => {
+Socket.emit("ServerPacket", { Name: "Wruff" });
+});
+
+
 
 setInterval(() => {
   if (Socket && Socket.connected) {
