@@ -8,9 +8,9 @@ SceneService.LoadScenes = function () {
     scene("Testing", () => {
         setGravity(1600);
 
-        const Client = ClientService.GetClient(localStorage.getItem("ClientId"));
-        const Socket = Client.Socket;
+        const localId = localStorage.getItem("ClientId");
 
+        // Local character
         const Character = add([
             sprite("bean"),
             area(),
@@ -19,41 +19,20 @@ SceneService.LoadScenes = function () {
             body(),
             color(rgb(255, 255, 255)),
             rotate(0),
-            state("Idle", [
-                "Idle",
-                "Dashing",
-                "Stunned",
-                "TrueStunned",
-                "Moving"
-            ]),
+            state("Idle", ["Idle", "Dashing", "Stunned", "TrueStunned", "Moving"]),
             {
                 CanUpDash: true,
                 Dashing: false,
                 DashTimer: 0,
                 Facing: 1,
-                Cooldowns: {
-                    DashCooldown: 0,
-                },
+                Cooldowns: { DashCooldown: 0 },
             },
             "LocalClient",
         ]);
 
         // Platforms
-        add([
-            rect(width(), 24),
-            area(),
-            outline(1),
-            pos(0, height() - 24),
-            body({ isStatic: true }),
-        ]);
-
-        add([
-            rect(300, 70),
-            area(),
-            outline(1),
-            pos(400, height() - 300),
-            body({ isStatic: true }),
-        ]);
+        add([rect(width(), 24), area(), outline(1), pos(0, height() - 24), body({ isStatic: true })]);
+        add([rect(300, 70), area(), outline(1), pos(400, height() - 300), body({ isStatic: true })]);
 
         // Landing effects
         Character.onGround(() => {
@@ -68,36 +47,28 @@ SceneService.LoadScenes = function () {
 
         let DustCooldown = 0;
 
-        // Dust while moving
         onUpdate(() => {
             if (Character.isGrounded() && !Character.Dashing && Character.state !== "Dashing" && (isKeyDown("a") || isKeyDown("d"))) {
                 DustCooldown -= dt();
-
                 if (DustCooldown <= 0) {
-                    const Direction = isKeyDown("a") ? -1 : 1;
-
+                    const dir = isKeyDown("a") ? -1 : 1;
                     EffectService.SpawnDust(Character.pos.add(vec2(0, Character.height / 2)), {
                         Count: 4,
                         SpeedRange: [40, 90],
-                        AngleRange: Direction > 0 ? [170, 190] : [-10, 10],
+                        AngleRange: dir > 0 ? [170, 190] : [-10, 10],
                         SizeRange: [2, 4],
                         LifeRange: [0.2, 0.35],
                     });
-
                     DustCooldown = 0.1;
                 }
             }
-        });
 
-        // Dash state management
-        onUpdate(() => {
+            // Dash cooldown + timer
             if (Character.Cooldowns.DashCooldown > 0) {
                 Character.Cooldowns.DashCooldown -= dt();
             }
-
             if (Character.state === "Dashing" || Character.Dashing) {
                 Character.DashTimer -= dt();
-
                 if (Character.DashTimer <= 0) {
                     Character.state = "Idle";
                     Character.Dashing = false;
@@ -106,75 +77,11 @@ SceneService.LoadScenes = function () {
             }
         });
 
-        // Input buffer
-        let InputBuffer = [];
-
-        const SkillCombinations = {
-            "WDD": () => debug.log("Sample1"),
-            "SDS": () => debug.log("Sample2"),
-        };
-
-        const DashCombinations = {
-            "DD": () => {
-                ClientService.SendPacket("DashSprite", {
-                    SpriteTag: localStorage.getItem("ClientId").toString(),
-                    Type: "Forwards",
-                });
-                ClientService.Dash(Character, "Forwards");
-            },
-
-            "AA": () => {
-                ClientService.SendPacket("DashSprite", {
-                    SpriteTag: localStorage.getItem("ClientId").toString(),
-                    Type: "Backwards",
-                });
-                ClientService.Dash(Character, "Backwards");
-            },
-
-            "WW": () => {
-                ClientService.SendPacket("DashSprite", {
-                    SpriteTag: localStorage.getItem("ClientId").toString(),
-                    Type: "Upwards",
-                });
-                ClientService.Dash(Character, "Upwards");
-            },
-        };
-
-        onKeyPress((Key) => {
-            InputBuffer.push({ KeyCode: Key.toUpperCase(), Time: time() });
-
-            if (InputBuffer.length > PhysicsService.Shared.MAX_INPUT) {
-                InputBuffer.shift();
-            }
-
-            InputBuffer = InputBuffer.filter(Index => time() - Index.Time <= PhysicsService.Shared.INPUT_TIME);
-
-            const Sequence = InputBuffer.map(Index => Index.KeyCode).join("");
-
-            if (!Character.Dashing && Character.state !== "Dashing") {
-                for (const Combination in SkillCombinations) {
-                    if (Sequence.endsWith(Combination)) {
-                        SkillCombinations[Combination]();
-                        InputBuffer = [];
-                        return;
-                    }
-                }
-            }
-
-            for (const Combination in DashCombinations) {
-                if (Sequence.endsWith(Combination)) {
-                    DashCombinations[Combination]();
-                    InputBuffer = [];
-                    return;
-                }
-            }
-        });
-
         // Movement
         onKeyDown("a", () => {
             if (!Character.Dashing && Character.state !== "Dashing") {
                 ClientService.SendPacket("MoveSprite", {
-                    SpriteTag: localStorage.getItem("ClientId").toString(),
+                    SpriteTag: localId,
                     Speed: -PhysicsService.Shared.PLAYER_SPEED,
                 });
                 Character.move(-PhysicsService.Shared.PLAYER_SPEED, 0);
@@ -185,7 +92,7 @@ SceneService.LoadScenes = function () {
         onKeyDown("d", () => {
             if (!Character.Dashing && Character.state !== "Dashing") {
                 ClientService.SendPacket("MoveSprite", {
-                    SpriteTag: localStorage.getItem("ClientId").toString(),
+                    SpriteTag: localId,
                     Speed: PhysicsService.Shared.PLAYER_SPEED,
                 });
                 Character.move(PhysicsService.Shared.PLAYER_SPEED, 0);
@@ -198,24 +105,44 @@ SceneService.LoadScenes = function () {
             if (Character.isGrounded() && !Character.Dashing && Character.state !== "Dashing") {
                 Character.jump(PhysicsService.Shared.JUMP_FORCE);
                 ClientService.SendPacket("JumpSprite", {
-                    SpriteTag: localStorage.getItem("ClientId").toString(),
+                    SpriteTag: localId,
                     Force: PhysicsService.Shared.JUMP_FORCE,
                 });
             }
         });
 
-        // Idle position update
+        // Dash combos
+        onKeyPress("a", () => checkDash("AA"));
+        onKeyPress("d", () => checkDash("DD"));
+        onKeyPress("w", () => checkDash("WW"));
+
+        let inputBuffer = [];
+        function checkDash(seq) {
+            inputBuffer.push({ key: seq[0], time: time() });
+            inputBuffer = inputBuffer.filter((i) => time() - i.time <= PhysicsService.Shared.INPUT_TIME);
+
+            const bufferStr = inputBuffer.map((i) => i.key).join("");
+            if (bufferStr.endsWith(seq)) {
+                const dashType =
+                    seq === "AA" ? "Backwards" : seq === "DD" ? "Forwards" : "Upwards";
+                ClientService.SendPacket("DashSprite", { SpriteTag: localId, Type: dashType });
+                ClientService.Dash(Character, dashType);
+                inputBuffer = [];
+            }
+        }
+
+        // Idle position sync
         Character.onUpdate(() => {
             if (Character.vel.x === 0 && Character.vel.y === 0) {
                 ClientService.SendPacket("PosSprite", {
-                    SpriteTag: localStorage.getItem("ClientId").toString(),
+                    SpriteTag: localId,
                     X: Character.pos.x,
                     Y: Character.pos.y,
                 });
             }
         });
 
-        // Ask server for all players on join
+        // Ask server for other clients
         ClientService.SendPacket("FetchClients", { Type: "CreateSprites" });
     });
 };

@@ -1,120 +1,147 @@
-import { PhysicsService } from "./Physics.js";
+const ClientService = {};
 
-const ClientService = {
-    Clients: new Map(),
+/**
+ * Initialize the client and socket connection
+ */
+ClientService.InitateClient = function () {
+    const Socket = io({
+        auth: {
+            Client: {
+                ClientId: localStorage.getItem("ClientId"),
+            },
+        },
+    });
+
+    this.Socket = Socket;
+    return { Socket };
 };
 
-ClientService.InitiateClient = function () {
-    const socket = io();
-
-    const client = {
-        Id: localStorage.getItem("ClientId"),
-        Socket: socket,
-    };
-
-    this.Clients.set(client.Id, client);
-    return client;
+/**
+ * Helper to send packets to the server
+ */
+ClientService.SendPacket = function (name, data = {}) {
+    if (!this.Socket || !this.Socket.connected) return;
+    this.Socket.emit("Packet", { Name: name, Data: data });
 };
 
-ClientService.GetClient = function (id) {
-    return this.Clients.get(id);
+/**
+ * Spawn a remote player sprite
+ */
+ClientService.SpawnRemoteSprite = function (id) {
+    const spriteObj = add([
+        sprite("bean"),
+        area(),
+        anchor("center"),
+        pos(120, 80),
+        body(),
+        color(rgb(255, 255, 255)),
+        rotate(0),
+        state("Idle", ["Idle", "Dashing", "Stunned", "TrueStunned", "Moving"]),
+        {
+            CanUpDash: true,
+            Dashing: false,
+            DashTimer: 0,
+            Facing: 1,
+            Cooldowns: { DashCooldown: 0 },
+        },
+        id,
+        "Client",
+    ]);
+    return spriteObj;
 };
 
-ClientService.SendPacket = function (name, data) {
-    const client = this.GetClient(localStorage.getItem("ClientId"));
-    if (client && client.Socket) {
-        client.Socket.emit("Packet", {
-            Name: name,
-            Data: data,
-        });
+/**
+ * Destroy a remote sprite
+ */
+ClientService.DestroyRemoteSprite = function (id) {
+    get(id).forEach((s) => destroy(s));
+};
+
+/**
+ * Dash helper (used by remote packets too)
+ */
+ClientService.Dash = function (sprite, type) {
+    if (!sprite) return;
+    sprite.state = "Dashing";
+    sprite.Dashing = true;
+    sprite.DashTimer = 0.25;
+
+    switch (type) {
+        case "Forwards":
+            sprite.vel.x = 800 * sprite.Facing;
+            break;
+        case "Backwards":
+            sprite.vel.x = -800 * sprite.Facing;
+            break;
+        case "Upwards":
+            if (sprite.CanUpDash) {
+                sprite.vel.y = -800;
+                sprite.CanUpDash = false;
+            }
+            break;
     }
 };
 
+/**
+ * Handle all packets coming from the server
+ */
 ClientService.HandlePacket = function (packet) {
-    const { Name, Data } = packet;
-    const id = Data?.SpriteTag;
+    const { Name, Clients, Data } = packet;
+    const localId = localStorage.getItem("ClientId");
 
     switch (Name) {
-        case "MoveSprite": {
-            let sprite = get(id)[0];
-            if (!sprite) {
-                sprite = this.SpawnRemoteSprite(id);
-            }
-            sprite.move(Data.Speed, 0);
-            break;
-        }
+        case "RefreshClientSprites": {
+            // Remove all existing remote sprites
+            get("Client").forEach((s) => destroy(s));
 
-        case "JumpSprite": {
-            let sprite = get(id)[0];
-            if (!sprite) {
-                sprite = this.SpawnRemoteSprite(id);
-            }
-            sprite.jump(Data.Force);
-            break;
-        }
-
-        case "DashSprite": {
-            let sprite = get(id)[0];
-            if (!sprite) {
-                sprite = this.SpawnRemoteSprite(id);
-            }
-            this.Dash(sprite, Data.Type);
-            break;
-        }
-
-        case "PosSprite": {
-            let sprite = get(id)[0];
-            if (!sprite) {
-                sprite = this.SpawnRemoteSprite(id);
-            }
-            sprite.pos = vec2(Data.X, Data.Y);
-            break;
-        }
-
-        case "FetchClients": {
-            // Server sends back all known clients
-            Data.Clients.forEach((clientId) => {
-                if (!get(clientId)[0]) {
+            Clients.forEach((clientId) => {
+                if (clientId !== localId) {
                     this.SpawnRemoteSprite(clientId);
                 }
             });
             break;
         }
-    }
-};
 
-ClientService.SpawnRemoteSprite = function (id) {
-    const sprite = add([
-        sprite("bean"),
-        area(),
-        anchor("center"),
-        pos(rand(100, 500), rand(100, 300)),
-        body(),
-        color(rgb(200, 200, 200)),
-        { Remote: true },
-        id,
-    ]);
-    return sprite;
-};
-
-ClientService.Dash = function (character, type) {
-    character.state = "Dashing";
-    character.Dashing = true;
-    character.DashTimer = 0.2;
-
-    switch (type) {
-        case "Forwards":
-            character.vel.x = PhysicsService.Shared.DASH_SPEED * character.Facing;
+        case "ClientLeft": {
+            this.DestroyRemoteSprite(packet.ClientId);
             break;
-        case "Backwards":
-            character.vel.x = -PhysicsService.Shared.DASH_SPEED * character.Facing;
-            break;
-        case "Upwards":
-            if (character.CanUpDash) {
-                character.vel.y = -PhysicsService.Shared.DASH_SPEED;
-                character.CanUpDash = false;
+        }
+
+        case "MoveSprite": {
+            if (Data.SpriteTag !== localId) {
+                let sprite = get(Data.SpriteTag)[0];
+                if (!sprite) sprite = this.SpawnRemoteSprite(Data.SpriteTag);
+                sprite.move(Data.Speed, 0);
             }
             break;
+        }
+
+        case "JumpSprite": {
+            if (Data.SpriteTag !== localId) {
+                let sprite = get(Data.SpriteTag)[0];
+                if (!sprite) sprite = this.SpawnRemoteSprite(Data.SpriteTag);
+                sprite.jump(Data.Force);
+            }
+            break;
+        }
+
+        case "DashSprite": {
+            if (Data.SpriteTag !== localId) {
+                let sprite = get(Data.SpriteTag)[0];
+                if (!sprite) sprite = this.SpawnRemoteSprite(Data.SpriteTag);
+                this.Dash(sprite, Data.Type);
+            }
+            break;
+        }
+
+        case "PosSprite": {
+            if (Data.SpriteTag !== localId) {
+                let sprite = get(Data.SpriteTag)[0];
+                if (!sprite) sprite = this.SpawnRemoteSprite(Data.SpriteTag);
+                sprite.pos = vec2(Data.X, Data.Y);
+            }
+            break;
+        }
     }
 };
 

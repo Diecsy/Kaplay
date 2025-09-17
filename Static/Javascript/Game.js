@@ -1,59 +1,43 @@
-import { EffectService } from './Services/Effects.js';
-import { ClientService } from './Services/Client.js';
-import { SceneService } from './Services/Scenes.js';
-import { DebugService } from './Services/Debug.js';
-import { LoadService } from './Services/Load.js';
+import { EffectService } from "./Effects.js";
+import { ClientService } from "./Client.js";
+import { SceneService } from "./Scenes.js";
+import { DebugService } from "./Debug.js";
+import { LoadService } from "./Load.js";
 
-// Ensure ClientId exists
+// Ensure clientId
 let ClientId = localStorage.getItem("ClientId");
 if (!ClientId) {
-  if (typeof crypto !== "undefined" && crypto.randomUUID) {
-    ClientId = crypto.randomUUID();
-  } else {
-    ClientId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  }
-  localStorage.setItem("ClientId", ClientId);
+    ClientId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    localStorage.setItem("ClientId", ClientId);
 }
 
-// Initialize client + socket
-const Client = ClientService.InitiateClient();
+// Init client + socket
+const Client = ClientService.InitateClient();
 const Socket = Client.Socket;
 
-// Debug and load game engine
+// Debug + load kaplay
 DebugService.ErudaConsole();
 LoadService.LoadKaplay();
 
-// Start scene after short delay
+// Enter scene
 setTimeout(() => {
-  go("Testing");
+    go("Testing");
 }, 1500);
 
-// --- Socket events ---
+// Connection events
+Socket.on("connect", () => console.log("Socket connected:", Socket.id));
+Socket.on("connect_error", (err) => console.error("Socket connect_error:", err));
+Socket.on("disconnect", (reason) => console.log("Socket disconnected:", reason));
 
-Socket.on("connect", () => {
-  console.log("✅ Socket connected:", Socket.id);
-});
-
-Socket.on("connect_error", (err) => {
-  console.error("❌ Socket connect_error:", err);
-});
-
-Socket.on("disconnect", (reason) => {
-  console.warn("⚠️ Socket disconnected:", reason);
-});
-
-// All packets now routed through ClientService
+// Handle packets
 Socket.on("Packet", (packet) => {
-  if (!packet) return;
-  console.log("📦 Received packet:", packet);
-  ClientService.HandlePacket(packet);
+    if (!packet) return;
+    ClientService.HandlePacket(packet);
 });
 
 // Heartbeat
 setInterval(() => {
-  if (Socket && Socket.connected) {
-    ClientService.SendPacket("Heartbeat", {
-      Time: Date.now(),
-    });
-  }
+    if (Socket && Socket.connected) {
+        ClientService.SendPacket("Heartbeat", { ClientId, Time: Date.now() });
+    }
 }, Math.round(1000 / 60));

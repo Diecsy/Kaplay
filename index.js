@@ -26,26 +26,26 @@ const ServerState = {
 };
 
 IO.on("connection", (socket) => {
-  console.log("🔌 Socket connected:", socket.id);
+  console.log("Socket connected:", socket.id);
 
   const ClientInfo = socket.handshake?.auth?.Client;
   const ClientId = ClientInfo?.ClientId;
 
   if (!ClientId) {
-    console.log(`❌ Connection rejected (missing ClientId) - socket: ${socket.id}`);
+    console.log(`Rejecting socket ${socket.id}: Missing ClientId`);
     socket.emit("Packet", { Name: "ConnectionError", Error: "MissingClientId" });
     socket.disconnect(true);
     return;
   }
 
-  // Single-tab enforcement
+  // Handle duplicate connections (replace old one)
   const prevSocketId = ServerState.ClientMap.get(ClientId);
   if (prevSocketId && prevSocketId !== socket.id) {
-    console.log(`⚠️ Replacing previous connection for ClientId ${ClientId} (old socket ${prevSocketId})`);
+    console.log(`Replacing connection for ClientId ${ClientId} (old socket ${prevSocketId})`);
     const prevSocket = IO.sockets.sockets.get(prevSocketId);
     if (prevSocket) {
       try {
-        prevSocket.emit("Packet", { Name: "ConnectionError", Error: "SingleTab" });
+        prevSocket.emit("Packet", { Name: "ConnectionError", Error: "ReplacedByNewConnection" });
         prevSocket.disconnect(true);
       } catch (e) {
         console.warn("Could not disconnect previous socket:", e);
@@ -58,17 +58,18 @@ IO.on("connection", (socket) => {
   ServerState.SocketMap.set(socket.id, ClientId);
   socket.data.clientId = ClientId;
 
-  console.log(`✅ Client ${ClientId} connected (socket ${socket.id})`);
+  console.log(`Client ${ClientId} connected.`);
 
-  // Sync clients for everyone
+  // Send full client list to everyone
   const clientsArray = Array.from(ServerState.ClientMap.keys());
   IO.emit("Packet", { Name: "RefreshClientSprites", Clients: clientsArray });
 
   // Handle incoming packets
   socket.on("Packet", (Packet) => {
     if (!Packet || typeof Packet.Name !== "string") return;
+    const { Name, Data } = Packet;
 
-    switch (Packet.Name) {
+    switch (Name) {
       case "FetchClients": {
         const clients = Array.from(ServerState.ClientMap.keys());
         socket.emit("Packet", { Name: "FetchClientsResponse", Clients: clients });
@@ -76,56 +77,56 @@ IO.on("connection", (socket) => {
       }
 
       case "MoveSprite": {
-        if (typeof Packet.SpriteTag === "string" && typeof Packet.Speed === "number") {
+        if (typeof Data.SpriteTag === "string" && typeof Data.Speed === "number") {
           socket.broadcast.emit("Packet", {
-            ...Packet,
-            T: Date.now(),
+            Name: "MoveSprite",
+            Data: { ...Data, T: Date.now() },
           });
         }
         break;
       }
 
       case "JumpSprite": {
-        if (typeof Packet.SpriteTag === "string" && typeof Packet.Force === "number") {
+        if (typeof Data.SpriteTag === "string" && typeof Data.Force === "number") {
           socket.broadcast.emit("Packet", {
-            ...Packet,
-            T: Date.now(),
+            Name: "JumpSprite",
+            Data: { ...Data, T: Date.now() },
           });
         }
         break;
       }
 
       case "DashSprite": {
-        if (typeof Packet.SpriteTag === "string" && typeof Packet.Type === "string") {
+        if (typeof Data.SpriteTag === "string" && typeof Data.Type === "string") {
           socket.broadcast.emit("Packet", {
-            ...Packet,
-            T: Date.now(),
+            Name: "DashSprite",
+            Data: { ...Data, T: Date.now() },
           });
         }
         break;
       }
 
       case "PosSprite": {
-        if (typeof Packet.SpriteTag === "string" && typeof Packet.X === "number" && typeof Packet.Y === "number") {
+        if (typeof Data.SpriteTag === "string" && typeof Data.X === "number" && typeof Data.Y === "number") {
           socket.broadcast.emit("Packet", {
-            ...Packet,
-            T: Date.now(),
+            Name: "PosSprite",
+            Data: { ...Data, T: Date.now() },
           });
         }
         break;
       }
 
       case "Heartbeat": {
-        // Optional: heartbeat tracking for latency/pings
+        // You can add latency/ping tracking here if needed
         break;
       }
 
       default:
-        console.log("ℹ️ Unhandled packet:", Packet);
-        break;
+        console.log(`Unknown packet:`, Packet);
     }
   });
 
+  // Handle disconnect
   socket.on("disconnect", (reason) => {
     const storedClientId = ServerState.SocketMap.get(socket.id);
     if (storedClientId) {
@@ -134,13 +135,14 @@ IO.on("connection", (socket) => {
       }
       ServerState.SocketMap.delete(socket.id);
 
-      console.log(`❌ Client ${storedClientId} disconnected (socket ${socket.id}). Reason: ${reason}`);
+      console.log(`Client ${storedClientId} disconnected. Reason: ${reason}`);
 
-      const clientsArray2 = Array.from(ServerState.ClientMap.keys());
+      // Tell everyone the client left
       IO.emit("Packet", { Name: "ClientLeft", ClientId: storedClientId });
+
+      // Send updated list
+      const clientsArray2 = Array.from(ServerState.ClientMap.keys());
       IO.emit("Packet", { Name: "RefreshClientSprites", Clients: clientsArray2 });
-    } else {
-      console.log(`⚠️ Unknown socket disconnected: ${socket.id}. Reason: ${reason}`);
     }
   });
 
@@ -150,5 +152,5 @@ IO.on("connection", (socket) => {
 });
 
 HTTPServer.listen(ServerState.Port, () => {
-  console.log(`🚀 Server listening on port ${ServerState.Port}`);
+  console.log(`Server listening on port ${ServerState.Port}`);
 });
