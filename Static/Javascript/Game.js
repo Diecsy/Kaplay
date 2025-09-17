@@ -56,6 +56,7 @@ Socket.on("ClientPacket", (Packet) => {
 
   if (Packet.Name == "Dusty") {
     const Player = get("Player");
+    console.log(Player);
     EffectService.SpawnAfterImage(Player);
   }
 })
