@@ -164,15 +164,11 @@ SceneService.LoadScenes = function () {
             }
         });
 
-        onDraw(() => {
+        setInterval(() => {
             if (Socket && Socket.connected) {
                 Socket.emit("ServerPacket", { Name: "MoveSprite", SpriteTag: localStorage.getItem("ClientId").toString(), X: Character.pos.x, Y: Character.pos.y });
             }
-        });
-
-        if (Socket && Socket.connected) {
-            Socket.emit("ServerPacket", { Name: "FetchClients", Type: "CreateSprites" });
-        }
+        }, 1000 / 60);
     });
 };
 
