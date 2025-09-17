@@ -25,6 +25,8 @@ ClientService.InitateClient = function () {
         ClientId: ClientId,
     };
 
+    console.log(ClientInfo);
+
     Clients.push(ClientInfo);
 
     return ClientInfo;
@@ -37,6 +39,7 @@ ClientService.GetClient = function(ClientId) {
 
     for (let Index = 0; Index < Clients.length; Index++) {
         if (Clients[Index] !== undefined && Clients[Index]["ClientId"] == ClientId) {
+            console.log(Clients[Index]);
             return Clients[Index]
         }
     }
