@@ -154,7 +154,7 @@ Socket.on("ClientPacket", (Packet) => {
     if (Packet.SpriteTag !== ClientId) {
       for (const Sprite of Sprites) {
         if (Sprite.pos !== undefined) {
-          Sprite.pos = vec2(Packet.x, Packet.y);
+          Sprite.pos = vec2(Packet.X, Packet.Y);
         }
       }
     }
