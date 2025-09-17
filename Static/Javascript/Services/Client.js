@@ -24,6 +24,7 @@ ClientService.SendPacket = function (name, data = {}) {
     this.Socket.emit("Packet", { Name: name, Data: data });
 };
 
+
 /**
  * Spawn a remote player sprite
  */

@@ -70,61 +70,21 @@ IO.on("connection", (socket) => {
     const { Name, Data } = Packet;
 
     switch (Name) {
-      case "FetchClients": {
-        const clients = Array.from(ServerState.ClientMap.keys());
-        socket.emit("Packet", { Name: "FetchClientsResponse", Clients: clients });
-        break;
-      }
-
-      case "MoveSprite": {
-        if (typeof Data.SpriteTag === "string" && typeof Data.Speed === "number") {
-          socket.broadcast.emit("Packet", {
-            Name: "MoveSprite",
-            Data: { ...Data, T: Date.now() },
-          });
-        }
-        break;
-      }
-
-      case "JumpSprite": {
-        if (typeof Data.SpriteTag === "string" && typeof Data.Force === "number") {
-          socket.broadcast.emit("Packet", {
-            Name: "JumpSprite",
-            Data: { ...Data, T: Date.now() },
-          });
-        }
-        break;
-      }
-
-      case "DashSprite": {
-        if (typeof Data.SpriteTag === "string" && typeof Data.Type === "string") {
-          socket.broadcast.emit("Packet", {
-            Name: "DashSprite",
-            Data: { ...Data, T: Date.now() },
-          });
-        }
-        break;
-      }
-
-      case "PosSprite": {
-        if (typeof Data.SpriteTag === "string" && typeof Data.X === "number" && typeof Data.Y === "number") {
-          socket.broadcast.emit("Packet", {
-            Name: "PosSprite",
-            Data: { ...Data, T: Date.now() },
-          });
-        }
-        break;
-      }
-
-      case "Heartbeat": {
-        // You can add latency/ping tracking here if needed
-        break;
-      }
-
-      default:
-        console.log(`Unknown packet:`, Packet);
+        case "MoveSprite":
+            socket.broadcast.emit("Packet", { Name: "MoveSprite", Data });
+            break;
+        case "JumpSprite":
+            socket.broadcast.emit("Packet", { Name: "JumpSprite", Data });
+            break;
+        case "DashSprite":
+            socket.broadcast.emit("Packet", { Name: "DashSprite", Data });
+            break;
+        case "PosSprite":
+            socket.broadcast.emit("Packet", { Name: "PosSprite", Data });
+            break;
     }
-  });
+});
+
 
   // Handle disconnect
   socket.on("disconnect", (reason) => {
