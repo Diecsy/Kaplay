@@ -5,7 +5,7 @@ const ClientService = {};
 const Clients = []
 
 ClientService.InitateClient = function () {
-    const ClientId = localStorage.get("ClientId");
+    const ClientId = localStorage.getItem("ClientId");
 
     if (!ClientId) {
         return;
