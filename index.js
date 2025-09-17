@@ -72,7 +72,7 @@ IO.on("connection", (socket) => {
     } else if (Packet.Name == "DashSprite") {
       IO.emit("ClientPacket", { Name: "DashSprite", SpriteTag: Packet.SpriteTag, Type: Packet.Type});
     } else if (Packet.Name == "PosSprite") {
-      IO.emit("ClientPacket", { Name: "PosSprite", SpriteTag: Packet.SpriteTag, X: Packet.X, Y: Packer.Y});
+      IO.emit("ClientPacket", { Name: "PosSprite", SpriteTag: Packet.SpriteTag, X: Packet.X, Y: Packet.Y});
     }
   });
 
