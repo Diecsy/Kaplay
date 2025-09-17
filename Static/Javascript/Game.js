@@ -1,3 +1,4 @@
+import { EffectService } from './Services/Effects.js';
 import { ClientService } from './Services/Client.js';
 import { SceneService } from './Services/Scenes.js';
 import { DebugService } from './Services/Debug.js';
@@ -52,8 +53,23 @@ Socket.on("disconnect", (reason) => {
   console.log("Socket disconnected:", reason);
 });
 
+Socket.on("ClientPacket", (Packet) => {
+  if (Packet == undefined) {
+    return;
+  }
+
+  if (Packet.Name == "Dusty") {
+    const Player = get("Player");
+    EffectService.SpawnAfterImage(Player);
+  }
+})
+
+if (onKeyPress("g")) {
+  Socket.emit("ServerPacket", { Name: "Wruff" });
+}
+
 setInterval(() => {
   if (Socket && Socket.connected) {
-    Socket.emit("ServerPacket", { Name: "Player" });
+    Socket.emit("ServerPacket", { Name: "PlayerInput" });
   }
 }, Math.round(1000 / 60));

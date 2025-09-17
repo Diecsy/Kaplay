@@ -31,6 +31,7 @@ SceneService.LoadScenes = function () {
                     DashCooldown: 0
                 }
             },
+            "Player"
         ]);
 
         add([

@@ -53,6 +53,10 @@ IO.on("connection", (socket) => {
 
 
     // handle packet here for later :3
+
+    if (Packet.Name == "Wruff") {
+      socket.emit("ClientPacket", { Name: "Dusty" });
+    }
   });
 
   socket.on("disconnect", (Reason) => {
