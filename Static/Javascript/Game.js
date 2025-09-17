@@ -127,9 +127,6 @@ Socket.on("ClientPacket", (Packet) => {
     ClientService.Dash(Sprite[0], Packet.Type);
   } else if (Packet.Name == "MoveSprite") {
     const Sprite = get(Packet.SpriteTag);
-
-    console.log(Packet.SpriteTag);
-
     Sprite[0].pos = vec2(Packet.X, Packet.Y);
   }
 })
